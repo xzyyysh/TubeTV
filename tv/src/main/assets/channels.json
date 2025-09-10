@@ -1,0 +1,11 @@
+{
+  "channels": [
+    {
+      "id": 1,
+      "name": "Telemicro",
+      "number": "13",
+      "enabled": true,
+      "description": "Canal 13 - Telemicro"
+    }
+  ]
+}
