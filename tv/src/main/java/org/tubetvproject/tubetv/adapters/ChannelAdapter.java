@@ -1,4 +1,4 @@
-package org.tubetvproject.tubetv;
+package org.tubetvproject.tubetv.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
+import org.tubetvproject.tubetv.R;
+import org.tubetvproject.tubetv.models.Channel;
 
 public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder> {
 

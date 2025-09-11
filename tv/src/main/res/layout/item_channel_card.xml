@@ -1,46 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="240dp"
-    android:layout_height="140dp"
-    android:layout_marginTop="12dp"
-    android:layout_marginBottom="12dp"
-    android:layout_marginStart="6dp"
-    android:layout_marginEnd="6dp"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:focusable="true"
     android:clickable="true"
-    android:foreground="?android:attr/selectableItemBackground"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="8dp"
-    app:cardBackgroundColor="?android:attr/colorPrimary">
+    android:background="?android:attr/selectableItemBackground">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="16dp">
+    <TextView
+        android:id="@+id/channel_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:fontFamily="sans-serif-medium"
+        android:minWidth="40dp"
+        android:gravity="start" />
 
-        <TextView
-            android:id="@+id/channel_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="28sp"
-            android:textColor="?android:attr/textColorPrimaryInverse"
-            android:fontFamily="sans-serif-black"
-            android:layout_marginBottom="6dp" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=" - "
+        android:textSize="18sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:fontFamily="sans-serif" />
 
-        <TextView
-            android:id="@+id/channel_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorPrimaryInverse"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="center"
-            android:maxLines="2"
-            android:ellipsize="end" />
+    <TextView
+        android:id="@+id/channel_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="18sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:fontFamily="sans-serif"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    </LinearLayout>
-
-</androidx.cardview.widget.CardView>
+</LinearLayout>

@@ -1,4 +1,4 @@
-package org.tubetvproject.tubetv;
+package org.tubetvproject.tubetv.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -9,7 +9,7 @@ import android.widget.Toast;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,10 +20,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import org.tubetvproject.tubetv.R;
+import org.tubetvproject.tubetv.models.Channel;
+import org.tubetvproject.tubetv.adapters.ChannelAdapter;
 
 public class MainActivity extends Activity implements ChannelAdapter.OnChannelClickListener {
 
     private TextView currentTimeTextView;
+    private TextView channelsCountTextView;
     private Handler timeHandler;
     private Runnable timeRunnable;
     private RecyclerView channelsRecyclerView;
@@ -43,12 +47,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private void initializeViews() {
         currentTimeTextView = findViewById(R.id.current_time);
+        channelsCountTextView = findViewById(R.id.channels_count);
         channelsRecyclerView = findViewById(R.id.channels_recycler_view);
 
         channelList = new ArrayList<>();
         channelAdapter = new ChannelAdapter(channelList, this);
 
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         channelsRecyclerView.setLayoutManager(layoutManager);
         channelsRecyclerView.setAdapter(channelAdapter);
     }
@@ -104,6 +109,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             }
 
             channelAdapter.updateChannels(channelList);
+            updateChannelsCount();
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -125,6 +131,12 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             return null;
         }
         return json;
+    }
+
+    private void updateChannelsCount() {
+        int count = channelList.size();
+        String countText = count + " canales";
+        channelsCountTextView.setText(countText);
     }
 
     @Override

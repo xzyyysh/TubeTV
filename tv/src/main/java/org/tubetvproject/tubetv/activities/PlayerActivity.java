@@ -1,4 +1,4 @@
-package org.tubetvproject.tubetv;
+package org.tubetvproject.tubetv.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.widget.TextView;
 import androidx.media3.common.MediaItem;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
+import org.tubetvproject.tubetv.R;
 
 public class PlayerActivity extends Activity {
 

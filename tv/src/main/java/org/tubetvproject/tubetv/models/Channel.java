@@ -1,4 +1,4 @@
-package org.tubetvproject.tubetv;
+package org.tubetvproject.tubetv.models;
 
 public class Channel {
     private int id;
