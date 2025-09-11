@@ -2,10 +2,19 @@
   "channels": [
     {
       "id": 1,
-      "name": "Telemicro",
+      "name": "Telecentro",
       "number": "13",
       "enabled": true,
-      "description": "Canal 13 - Telemicro"
+      "description": "Canal 13 - Telecentro",
+      "streamUrl": "https://live2.telemicro.com.do/web/telecentro/playlist.m3u8"
+    },
+    {
+      "id": 2,
+      "name": "Telemicro",
+      "number": "5",
+      "enabled": true,
+      "description": "Canal 5 - Telemicro",
+      "streamUrl": "https://live4.telemicro.com.do/live/telemicrocast_1080p/playlist.m3u8"
     }
   ]
 }

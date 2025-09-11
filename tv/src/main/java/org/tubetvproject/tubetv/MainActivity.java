@@ -1,6 +1,7 @@
 package org.tubetvproject.tubetv;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
@@ -47,7 +48,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         channelList = new ArrayList<>();
         channelAdapter = new ChannelAdapter(channelList, this);
 
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 4);
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         channelsRecyclerView.setLayoutManager(layoutManager);
         channelsRecyclerView.setAdapter(channelAdapter);
     }
@@ -95,7 +96,8 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                         channelObj.getString("name"),
                         channelObj.getString("number"),
                         enabled,
-                        channelObj.getString("description")
+                        channelObj.getString("description"),
+                        channelObj.getString("streamUrl")
                     );
                     channelList.add(channel);
                 }
@@ -127,8 +129,11 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     @Override
     public void onChannelClick(Channel channel) {
-        Toast.makeText(this, "Selected: " + channel.getName() + " Canal " + channel.getNumber(),
-                Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, PlayerActivity.class);
+        intent.putExtra("channel_name", channel.getName());
+        intent.putExtra("channel_number", channel.getNumber());
+        intent.putExtra("stream_url", channel.getStreamUrl());
+        startActivity(intent);
     }
 
     @Override

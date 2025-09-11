@@ -6,16 +6,18 @@ public class Channel {
     private String number;
     private boolean enabled;
     private String description;
+    private String streamUrl;
 
     public Channel() {
     }
 
-    public Channel(int id, String name, String number, boolean enabled, String description) {
+    public Channel(int id, String name, String number, boolean enabled, String description, String streamUrl) {
         this.id = id;
         this.name = name;
         this.number = number;
         this.enabled = enabled;
         this.description = description;
+        this.streamUrl = streamUrl;
     }
 
     public int getId() {
@@ -56,5 +58,13 @@ public class Channel {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getStreamUrl() {
+        return streamUrl;
+    }
+
+    public void setStreamUrl(String streamUrl) {
+        this.streamUrl = streamUrl;
     }
 }
