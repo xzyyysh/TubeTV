@@ -1,4 +1,4 @@
-package org.tubetvproject.tubetv.activities;
+package io.tubetvlol.tubetv.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.View;
+import android.view.WindowInsetsController;
+import android.view.WindowInsets;
 import android.view.animation.AlphaAnimation;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,9 +22,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import org.tubetvproject.tubetv.R;
-import org.tubetvproject.tubetv.models.Channel;
-import org.tubetvproject.tubetv.adapters.ChannelAdapter;
+import io.tubetvlol.tubetv.R;
+import io.tubetvlol.tubetv.models.Channel;
+import io.tubetvlol.tubetv.adapters.ChannelAdapter;
 
 public class MainActivity extends Activity implements ChannelAdapter.OnChannelClickListener {
 
@@ -38,11 +40,20 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        hideSystemUI();
 
         initializeViews();
         setupFadeInAnimation();
         startTimeUpdater();
         loadChannels();
+    }
+
+    private void hideSystemUI() {
+        WindowInsetsController controller = getWindow().getInsetsController();
+        if (controller != null) {
+            controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        }
     }
 
     private void initializeViews() {
@@ -154,5 +165,11 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         if (timeHandler != null && timeRunnable != null) {
             timeHandler.removeCallbacks(timeRunnable);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemUI();
     }
 }

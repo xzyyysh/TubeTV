@@ -6,7 +6,7 @@
       "number": "13",
       "enabled": true,
       "description": "Canal 13 - Telecentro",
-      "streamUrl": "https://live2.telemicro.com.do/web/telecentro/playlist.m3u8"
+      "streamUrl": "telemicro:https://telemicro.com.do/telecentro-en-vivo/"
     },
     {
       "id": 2,
@@ -14,7 +14,23 @@
       "number": "5",
       "enabled": true,
       "description": "Canal 5 - Telemicro",
-      "streamUrl": "https://live4.telemicro.com.do/live/telemicrocast_1080p/playlist.m3u8"
+      "streamUrl": "telemicro:https://telemicro.com.do/telemicro-en-vivo/"
+    },
+    {
+      "id": 3,
+      "name": "Teleantillas",
+      "number": "2",
+      "enabled": true,
+      "description": "Canal 2 - Teleantillas",
+      "streamUrl": "dailymotion:x8mwmvs"
+    },
+    {
+      "id": 4,
+      "name": "Digital 15",
+      "number": "15",
+      "enabled": true,
+      "description": "Canal 15 - Digital 15",
+      "streamUrl": "telemicro:https://telemicro.com.do/digital-15-en-vivo/"
     }
   ]
 }
