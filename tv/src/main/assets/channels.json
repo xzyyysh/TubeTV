@@ -31,6 +31,22 @@
       "enabled": true,
       "description": "Canal 15 - Digital 15",
       "streamUrl": "telemicro:https://telemicro.com.do/digital-15-en-vivo/"
+    },
+    {
+      "id": 5,
+      "name": "Antena 7",
+      "number": "7",
+      "enabled": true,
+      "description": "Canal 7 - Antena 7",
+      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-7/"
+    },
+    {
+      "id": 6,
+      "name": "Antena 21",
+      "number": "21",
+      "enabled": true,
+      "description": "Canal 21 - Antena 21",
+      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-21/"
     }
   ]
 }

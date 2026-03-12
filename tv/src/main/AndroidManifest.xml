@@ -23,6 +23,7 @@
         <activity
             android:name=".activities.MainActivity"
             android:launchMode="singleTop"
+            android:screenOrientation="landscape"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +37,7 @@
 
         <activity
             android:name=".activities.PlayerActivity"
+            android:screenOrientation="landscape"
             android:exported="false"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
 

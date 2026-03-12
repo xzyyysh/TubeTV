@@ -11,7 +11,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowInsets;
 import android.view.animation.AlphaAnimation;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -64,7 +64,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         channelList = new ArrayList<>();
         channelAdapter = new ChannelAdapter(channelList, this);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
         channelsRecyclerView.setLayoutManager(layoutManager);
         channelsRecyclerView.setAdapter(channelAdapter);
     }

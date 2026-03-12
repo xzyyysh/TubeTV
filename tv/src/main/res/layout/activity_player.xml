@@ -13,6 +13,16 @@
         android:background="@android:color/black"
         app:use_controller="false" />
 
+    <TextView
+        android:id="@+id/loading_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="..."
+        android:textColor="@android:color/white"
+        android:textSize="48sp"
+        android:visibility="gone" />
+
     <include layout="@layout/custom_player_controls" />
 
 </FrameLayout>

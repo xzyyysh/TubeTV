@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowInsetsController;
@@ -11,8 +12,10 @@ import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
@@ -24,11 +27,13 @@ import androidx.media3.exoplayer.hls.HlsMediaSource;
 import java.util.HashMap;
 import java.util.Map;
 import io.tubetvlol.tubetv.R;
+import io.tubetvlol.tubetv.utils.Antena7Extractor;
 import io.tubetvlol.tubetv.utils.DailymotionExtractor;
 import io.tubetvlol.tubetv.utils.TelemicroExtractor;
 
 public class PlayerActivity extends Activity {
 
+    private static final String TAG = "PlayerActivity";
     private ExoPlayer player;
     private PlayerView playerView;
     private boolean isTelemicroStream = false;
@@ -37,6 +42,11 @@ public class PlayerActivity extends Activity {
     private Handler hideControlsHandler;
     private Runnable hideControlsRunnable;
     private static final int CONTROLS_HIDE_DELAY = 3000;
+    private WebView hiddenWebView;
+    private TextView loadingText;
+    private Handler loadingHandler;
+    private Runnable loadingRunnable;
+    private int loadingDotCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +60,23 @@ public class PlayerActivity extends Activity {
         playerView = findViewById(R.id.player_view);
         controlsContainer = findViewById(R.id.controls_container);
         playPauseButton = findViewById(R.id.play_pause_button);
+        loadingText = findViewById(R.id.loading_text);
+
+        loadingHandler = new Handler(Looper.getMainLooper());
+        loadingRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (loadingText.getVisibility() == View.VISIBLE) {
+                    loadingDotCount = (loadingDotCount % 3) + 1;
+                    String dots = "";
+                    for (int i = 0; i < loadingDotCount; i++) {
+                        dots += ".";
+                    }
+                    loadingText.setText(dots);
+                    loadingHandler.postDelayed(this, 500);
+                }
+            }
+        };
 
         hideControlsHandler = new Handler(Looper.getMainLooper());
         hideControlsRunnable = this::hideControls;
@@ -66,6 +93,8 @@ public class PlayerActivity extends Activity {
         } else if (streamUrl.startsWith("telemicro:")) {
             isTelemicroStream = true;
             loadTelemicroStream();
+        } else if (streamUrl.startsWith("antena7:")) {
+            loadAntena7Stream();
         } else {
             initializePlayer(streamUrl);
         }
@@ -133,6 +162,7 @@ public class PlayerActivity extends Activity {
     }
 
     private void loadDailymotionStream(String videoId) {
+        showLoading();
         DailymotionExtractor.getStreamUrl(videoId, new DailymotionExtractor.StreamCallback() {
             @Override
             public void onSuccess(String streamUrl) {
@@ -144,6 +174,7 @@ public class PlayerActivity extends Activity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
+                    hideLoading();
                     String userMessage = getUserFriendlyError(error);
                     Toast.makeText(PlayerActivity.this, userMessage, Toast.LENGTH_LONG).show();
                     finish();
@@ -155,6 +186,7 @@ public class PlayerActivity extends Activity {
     private void loadTelemicroStream() {
         String telemicroUrl = getIntent().getStringExtra("stream_url").substring(10);
         
+        showLoading();
         new Thread(() -> {
             String streamUrl = TelemicroExtractor.extractStreamUrl(telemicroUrl);
             
@@ -162,11 +194,64 @@ public class PlayerActivity extends Activity {
                 if (streamUrl != null) {
                     initializePlayer(streamUrl);
                 } else {
+                    hideLoading();
                     Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
                     finish();
                 }
             });
         }).start();
+    }
+
+    private void loadAntena7Stream() {
+        Log.d(TAG, "Loading Antena 7 stream...");
+        
+        showLoading();
+        hiddenWebView = new WebView(this);
+        hiddenWebView.setVisibility(View.GONE);
+        
+        Antena7Extractor.extractStreamUrl(hiddenWebView, new Antena7Extractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "Antena 7 stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    initializePlayer(streamUrl);
+                    cleanupWebView();
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Antena 7 extraction error: " + error);
+                runOnUiThread(() -> {
+                    hideLoading();
+                    Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                    cleanupWebView();
+                    finish();
+                });
+            }
+        });
+    }
+
+    private void cleanupWebView() {
+        if (hiddenWebView != null) {
+            hiddenWebView.destroy();
+            hiddenWebView = null;
+        }
+    }
+
+    private void showLoading() {
+        if (loadingText != null) {
+            loadingText.setVisibility(View.VISIBLE);
+            loadingDotCount = 0;
+            loadingHandler.post(loadingRunnable);
+        }
+    }
+
+    private void hideLoading() {
+        if (loadingText != null) {
+            loadingText.setVisibility(View.GONE);
+            loadingHandler.removeCallbacks(loadingRunnable);
+        }
     }
 
     private String getUserFriendlyError(String error) {
@@ -213,9 +298,21 @@ public class PlayerActivity extends Activity {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
                 if (isPlaying) {
+                    hideLoading();
                     playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
                 } else {
                     playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                }
+            }
+
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                if (playbackState == Player.STATE_BUFFERING) {
+                    showLoading();
+                } else if (playbackState == Player.STATE_READY) {
+                    hideLoading();
+                } else if (playbackState == Player.STATE_ENDED || playbackState == Player.STATE_IDLE) {
+                    hideLoading();
                 }
             }
         });
