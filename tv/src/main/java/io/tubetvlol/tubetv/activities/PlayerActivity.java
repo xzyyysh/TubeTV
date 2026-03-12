@@ -1,5 +1,6 @@
 package io.tubetvlol.tubetv.activities;
 
+import androidx.media3.common.util.UnstableApi;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,6 +32,7 @@ import io.tubetvlol.tubetv.utils.Antena7Extractor;
 import io.tubetvlol.tubetv.utils.DailymotionExtractor;
 import io.tubetvlol.tubetv.utils.TelemicroExtractor;
 
+@UnstableApi
 public class PlayerActivity extends Activity {
 
     private static final String TAG = "PlayerActivity";
@@ -283,10 +285,18 @@ public class PlayerActivity extends Activity {
     }
 
     private void hideSystemUI() {
-        WindowInsetsController controller = getWindow().getInsetsController();
-        if (controller != null) {
-            controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-            controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            );
         }
     }
 

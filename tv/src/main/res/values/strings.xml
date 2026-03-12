@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">TubeTV</string>
     <string name="channels_title">Canales</string>
+    <string name="play_pause">Play/Pause</string>
+    <string name="live_text">EN VIVO</string>
+    <string name="loading_text">...</string>
+    <string name="channel_separator"> - </string>
+    <string name="app_logo_description">TubeTV Logo</string>
 </resources>

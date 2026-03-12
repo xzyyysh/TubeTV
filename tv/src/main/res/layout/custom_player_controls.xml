@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/controls_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -20,8 +21,8 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_pause"
             android:scaleType="fitCenter"
-            android:tint="@android:color/white"
-            android:contentDescription="Play/Pause" />
+            app:tint="@android:color/white"
+            android:contentDescription="@string/play_pause" />
 
     </LinearLayout>
 
@@ -43,7 +44,7 @@
             android:id="@+id/live_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="EN VIVO"
+            android:text="@string/live_text"
             android:textColor="#FF0000"
             android:textSize="14sp"
             android:textStyle="bold"

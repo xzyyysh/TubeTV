@@ -1,5 +1,6 @@
 package io.tubetvlol.tubetv.activities;
 
+import androidx.media3.common.util.UnstableApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import io.tubetvlol.tubetv.R;
 import io.tubetvlol.tubetv.models.Channel;
 import io.tubetvlol.tubetv.adapters.ChannelAdapter;
 
+@UnstableApi
 public class MainActivity extends Activity implements ChannelAdapter.OnChannelClickListener {
 
     private TextView currentTimeTextView;
@@ -49,10 +51,18 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void hideSystemUI() {
-        WindowInsetsController controller = getWindow().getInsetsController();
-        if (controller != null) {
-            controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-            controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            );
         }
     }
 
