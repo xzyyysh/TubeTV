@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 public class Antena7Extractor {
     private static final String TAG = "Antena7Extractor";
-    private static final String ANTENA7_URL = "https://www.antena7.com.do/envivo-canal-7/";
     private static final int INITIAL_WAIT = 3000;
     private static final int PLAY_WAIT = 2000;
     private static final int EXTENDED_WAIT = 8000;
@@ -22,17 +21,17 @@ public class Antena7Extractor {
         void onError(String error);
     }
 
-    public static void extractStreamUrl(WebView webView, ExtractionCallback callback) {
-        extractWithRetry(webView, callback, 0);
+    public static void extractStreamUrl(WebView webView, String pageUrl, ExtractionCallback callback) {
+        extractWithRetry(webView, pageUrl, callback, 0);
     }
 
-    private static void extractWithRetry(WebView webView, ExtractionCallback callback, int retryCount) {
+    private static void extractWithRetry(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
         if (retryCount >= MAX_RETRIES) {
             callback.onError("Failed to extract stream URL after " + MAX_RETRIES + " attempts");
             return;
         }
 
-        Log.d(TAG, "Attempt " + (retryCount + 1) + " - Loading page: " + ANTENA7_URL);
+        Log.d(TAG, "Attempt " + (retryCount + 1) + " - Loading page: " + pageUrl);
 
         Handler handler = new Handler(Looper.getMainLooper());
 
@@ -47,7 +46,7 @@ public class Antena7Extractor {
                 Log.d(TAG, "Page loaded, waiting for player initialization...");
 
                 handler.postDelayed(() -> {
-                    checkVideoElement(view, handler, callback, retryCount);
+                    checkVideoElement(view, handler, pageUrl, callback, retryCount);
                 }, INITIAL_WAIT);
             }
 
@@ -58,10 +57,10 @@ public class Antena7Extractor {
             }
         });
 
-        webView.loadUrl(ANTENA7_URL);
+        webView.loadUrl(pageUrl);
     }
 
-    private static void checkVideoElement(WebView webView, Handler handler, ExtractionCallback callback, int retryCount) {
+    private static void checkVideoElement(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
         Log.d(TAG, "Method 1: Checking for video element in main DOM...");
         String jsCode = "(function() {" +
                 "  const video = document.querySelector('video');" +
@@ -82,13 +81,13 @@ public class Antena7Extractor {
             } else {
                 Log.d(TAG, "Method 2: Clicking play and waiting longer...");
                 handler.postDelayed(() -> {
-                    tryClickPlayButton(webView, handler, callback, retryCount);
+                    tryClickPlayButton(webView, handler, pageUrl, callback, retryCount);
                 }, 1000);
             }
         });
     }
 
-    private static void tryClickPlayButton(WebView webView, Handler handler, ExtractionCallback callback, int retryCount) {
+    private static void tryClickPlayButton(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
         String clickJs = "(function() {" +
                 "  const playButton = document.querySelector('button[aria-label*=\"play\"], media-play-button');" +
                 "  if (playButton) {" +
@@ -106,12 +105,12 @@ public class Antena7Extractor {
             }
 
             handler.postDelayed(() -> {
-                checkShadowDOM(webView, handler, callback, retryCount);
+                checkShadowDOM(webView, handler, pageUrl, callback, retryCount);
             }, PLAY_WAIT);
         });
     }
 
-    private static void checkShadowDOM(WebView webView, Handler handler, ExtractionCallback callback, int retryCount) {
+    private static void checkShadowDOM(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
         Log.d(TAG, "Method 3: Checking video element in shadow DOM...");
         
         handler.postDelayed(() -> {
@@ -158,13 +157,13 @@ public class Antena7Extractor {
                     callback.onSuccess(cleanUrl);
                 } else {
                     Log.d(TAG, "Method 4: Checking window.Adjacent object...");
-                    checkAdjacentObject(webView, callback, retryCount);
+                    checkAdjacentObject(webView, pageUrl, callback, retryCount);
                 }
             });
         }, EXTENDED_WAIT);
     }
 
-    private static void checkAdjacentObject(WebView webView, ExtractionCallback callback, int retryCount) {
+    private static void checkAdjacentObject(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
         String jsCode = "(function() {" +
                 "  const adjacent = window.Adjacent;" +
                 "  if (!adjacent) return null;" +
@@ -202,12 +201,12 @@ public class Antena7Extractor {
                 callback.onSuccess(cleanUrl);
             } else {
                 Log.d(TAG, "Method 5: Checking page source with regex...");
-                extractFromPageSource(webView, callback, retryCount);
+                extractFromPageSource(webView, pageUrl, callback, retryCount);
             }
         });
     }
 
-    private static void extractFromPageSource(WebView webView, ExtractionCallback callback, int retryCount) {
+    private static void extractFromPageSource(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
         String jsCode = "document.documentElement.outerHTML;";
 
         webView.evaluateJavascript(jsCode, html -> {
@@ -239,12 +238,12 @@ public class Antena7Extractor {
                     } else {
                         Log.e(TAG, "No stream URL found in page source");
                         Log.d(TAG, "HTML sample: " + cleanHtml.substring(0, Math.min(500, cleanHtml.length())));
-                        extractWithRetry(webView, callback, retryCount + 1);
+                        extractWithRetry(webView, pageUrl, callback, retryCount + 1);
                     }
                 }
             } else {
                 Log.e(TAG, "Failed to get page source");
-                extractWithRetry(webView, callback, retryCount + 1);
+                extractWithRetry(webView, pageUrl, callback, retryCount + 1);
             }
         });
     }

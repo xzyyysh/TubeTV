@@ -49,11 +49,14 @@ public class PlayerActivity extends Activity {
     private Handler loadingHandler;
     private Runnable loadingRunnable;
     private int loadingDotCount = 0;
+    private boolean isActivityActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+        
+        isActivityActive = true;
         
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         
@@ -169,17 +172,21 @@ public class PlayerActivity extends Activity {
             @Override
             public void onSuccess(String streamUrl) {
                 runOnUiThread(() -> {
-                    initializePlayer(streamUrl);
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                    }
                 });
             }
 
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    hideLoading();
-                    String userMessage = getUserFriendlyError(error);
-                    Toast.makeText(PlayerActivity.this, userMessage, Toast.LENGTH_LONG).show();
-                    finish();
+                    if (isActivityActive) {
+                        hideLoading();
+                        String userMessage = getUserFriendlyError(error);
+                        Toast.makeText(PlayerActivity.this, userMessage, Toast.LENGTH_LONG).show();
+                        finish();
+                    }
                 });
             }
         });
@@ -193,31 +200,36 @@ public class PlayerActivity extends Activity {
             String streamUrl = TelemicroExtractor.extractStreamUrl(telemicroUrl);
             
             runOnUiThread(() -> {
-                if (streamUrl != null) {
-                    initializePlayer(streamUrl);
-                } else {
-                    hideLoading();
-                    Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
-                    finish();
+                if (isActivityActive) {
+                    if (streamUrl != null) {
+                        initializePlayer(streamUrl);
+                    } else {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
                 }
             });
         }).start();
     }
 
     private void loadAntena7Stream() {
-        Log.d(TAG, "Loading Antena 7 stream...");
+        String antena7Url = getIntent().getStringExtra("stream_url").substring(8);
+        Log.d(TAG, "Loading Antena 7 stream from: " + antena7Url);
         
         showLoading();
         hiddenWebView = new WebView(this);
         hiddenWebView.setVisibility(View.GONE);
         
-        Antena7Extractor.extractStreamUrl(hiddenWebView, new Antena7Extractor.ExtractionCallback() {
+        Antena7Extractor.extractStreamUrl(hiddenWebView, antena7Url, new Antena7Extractor.ExtractionCallback() {
             @Override
             public void onSuccess(String streamUrl) {
                 Log.d(TAG, "Antena 7 stream URL extracted: " + streamUrl);
                 runOnUiThread(() -> {
-                    initializePlayer(streamUrl);
-                    cleanupWebView();
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                        cleanupWebView();
+                    }
                 });
             }
 
@@ -225,10 +237,12 @@ public class PlayerActivity extends Activity {
             public void onError(String error) {
                 Log.e(TAG, "Antena 7 extraction error: " + error);
                 runOnUiThread(() -> {
-                    hideLoading();
-                    Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
-                    cleanupWebView();
-                    finish();
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        cleanupWebView();
+                        finish();
+                    }
                 });
             }
         });
@@ -363,7 +377,10 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        isActivityActive = false;
         hideControlsHandler.removeCallbacks(hideControlsRunnable);
+        loadingHandler.removeCallbacks(loadingRunnable);
+        cleanupWebView();
         if (player != null) {
             player.release();
             player = null;
