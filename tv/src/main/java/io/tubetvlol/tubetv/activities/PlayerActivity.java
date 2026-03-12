@@ -2,18 +2,24 @@ package io.tubetvlol.tubetv.activities;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.widget.TextView;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.Toast;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.source.MediaSource;
-import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,6 +32,11 @@ public class PlayerActivity extends Activity {
     private ExoPlayer player;
     private PlayerView playerView;
     private boolean isTelemicroStream = false;
+    private FrameLayout controlsContainer;
+    private ImageButton playPauseButton;
+    private Handler hideControlsHandler;
+    private Runnable hideControlsRunnable;
+    private static final int CONTROLS_HIDE_DELAY = 3000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +48,13 @@ public class PlayerActivity extends Activity {
         hideSystemUI();
 
         playerView = findViewById(R.id.player_view);
+        controlsContainer = findViewById(R.id.controls_container);
+        playPauseButton = findViewById(R.id.play_pause_button);
+
+        hideControlsHandler = new Handler(Looper.getMainLooper());
+        hideControlsRunnable = this::hideControls;
+
+        setupControlListeners();
 
         String channelName = getIntent().getStringExtra("channel_name");
         String channelNumber = getIntent().getStringExtra("channel_number");
@@ -53,6 +71,67 @@ public class PlayerActivity extends Activity {
         }
     }
 
+    private void setupControlListeners() {
+        View rootContainer = findViewById(R.id.root_container);
+        rootContainer.setOnClickListener(v -> toggleControls());
+
+        playPauseButton.setOnClickListener(v -> {
+            if (player != null) {
+                if (player.isPlaying()) {
+                    player.pause();
+                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                } else {
+                    if (player.isCurrentMediaItemLive()) {
+                        player.seekToDefaultPosition();
+                    }
+                    player.play();
+                    playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                }
+            }
+            resetHideControlsTimer();
+        });
+    }
+
+    private void toggleControls() {
+        if (controlsContainer.getVisibility() == View.VISIBLE) {
+            hideControls();
+        } else {
+            showControls();
+        }
+    }
+
+    private void showControls() {
+        controlsContainer.setVisibility(View.VISIBLE);
+        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+        fadeIn.setDuration(300);
+        controlsContainer.startAnimation(fadeIn);
+        resetHideControlsTimer();
+    }
+
+    private void hideControls() {
+        AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.0f);
+        fadeOut.setDuration(300);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {}
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                controlsContainer.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+        controlsContainer.startAnimation(fadeOut);
+        hideControlsHandler.removeCallbacks(hideControlsRunnable);
+    }
+
+    private void resetHideControlsTimer() {
+        hideControlsHandler.removeCallbacks(hideControlsRunnable);
+        hideControlsHandler.postDelayed(hideControlsRunnable, CONTROLS_HIDE_DELAY);
+    }
+
     private void loadDailymotionStream(String videoId) {
         DailymotionExtractor.getStreamUrl(videoId, new DailymotionExtractor.StreamCallback() {
             @Override
@@ -65,7 +144,8 @@ public class PlayerActivity extends Activity {
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
-                    Toast.makeText(PlayerActivity.this, "Error: " + error, Toast.LENGTH_LONG).show();
+                    String userMessage = getUserFriendlyError(error);
+                    Toast.makeText(PlayerActivity.this, userMessage, Toast.LENGTH_LONG).show();
                     finish();
                 });
             }
@@ -82,11 +162,39 @@ public class PlayerActivity extends Activity {
                 if (streamUrl != null) {
                     initializePlayer(streamUrl);
                 } else {
-                    Toast.makeText(PlayerActivity.this, "Error: No se pudo obtener el stream", Toast.LENGTH_LONG).show();
+                    Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
                     finish();
                 }
             });
         }).start();
+    }
+
+    private String getUserFriendlyError(String error) {
+        if (error == null) {
+            return "Canal no disponible por el momento.";
+        }
+        
+        if (error.contains("private") || error.contains("DM020")) {
+            return "Canal no disponible por el momento.";
+        }
+        
+        if (error.contains("403") || error.contains("blocked")) {
+            return "Canal no disponible por el momento.";
+        }
+        
+        if (error.contains("404") || error.contains("not found")) {
+            return "Canal no disponible por el momento.";
+        }
+        
+        if (error.contains("timeout") || error.contains("Connection")) {
+            return "Error de conexión. Intenta de nuevo.";
+        }
+        
+        if (error.contains("No internet")) {
+            return "Sin conexión a internet.";
+        }
+        
+        return "Canal no disponible por el momento.";
     }
 
     private void hideSystemUI() {
@@ -100,6 +208,17 @@ public class PlayerActivity extends Activity {
     private void initializePlayer(String streamUrl) {
         player = new ExoPlayer.Builder(this).build();
         playerView.setPlayer(player);
+
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                if (isPlaying) {
+                    playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                } else {
+                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                }
+            }
+        });
 
         if (isTelemicroStream) {
             Map<String, String> headers = new HashMap<>();
@@ -137,6 +256,7 @@ public class PlayerActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        hideControlsHandler.removeCallbacks(hideControlsRunnable);
         if (player != null) {
             player.release();
             player = null;
@@ -156,6 +276,9 @@ public class PlayerActivity extends Activity {
         super.onResume();
         hideSystemUI();
         if (player != null) {
+            if (player.isCurrentMediaItemLive()) {
+                player.seekToDefaultPosition();
+            }
             player.play();
         }
     }

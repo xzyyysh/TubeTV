@@ -67,7 +67,9 @@ public class DailymotionExtractor {
                             JSONObject error = json.getJSONObject("error");
                             String errorMsg = error.optString("message", "Unknown error");
                             String errorCode = error.optString("code", "");
-                            throw new Exception("API error [" + errorCode + "]: " + errorMsg);
+                            String fullError = "API error [" + errorCode + "]: " + errorMsg;
+                            Log.e(TAG, fullError);
+                            throw new Exception(fullError);
                         }
 
                         if (!json.has("qualities")) {
@@ -130,8 +132,9 @@ public class DailymotionExtractor {
                     break;
                 } catch (Exception e) {
                     lastError = e.getMessage();
-                    Log.e(TAG, "Error: " + lastError, e);
-                    if (lastError != null && lastError.contains("API error")) {
+                    Log.e(TAG, "Error extracting stream: " + lastError, e);
+                    if (lastError != null && (lastError.contains("API error") || lastError.contains("private") || lastError.contains("DM020"))) {
+                        Log.e(TAG, "Video is private or restricted, stopping retries");
                         break;
                     }
                 }
