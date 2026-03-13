@@ -139,6 +139,7 @@ public class PlayerActivity extends Activity {
         AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
         fadeIn.setDuration(300);
         controlsContainer.startAnimation(fadeIn);
+        playPauseButton.requestFocus();
         resetHideControlsTimer();
     }
 
@@ -367,10 +368,31 @@ public class PlayerActivity extends Activity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
             finish();
             return true;
         }
+        
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+            if (controlsContainer.getVisibility() == View.VISIBLE) {
+                return super.onKeyDown(keyCode, event);
+            } else {
+                showControls();
+                return true;
+            }
+        }
+        
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (player != null) {
+                if (player.isPlaying()) {
+                    player.pause();
+                } else {
+                    player.play();
+                }
+            }
+            return true;
+        }
+        
         return super.onKeyDown(keyCode, event);
     }
 

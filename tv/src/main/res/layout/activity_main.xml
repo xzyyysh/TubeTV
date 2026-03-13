@@ -90,7 +90,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="16dp"
                 android:layout_marginEnd="16dp"
-                android:background="?android:attr/textColorSecondary" />
+                android:background="#40FFFFFF" />
 
             <TextView
                 android:id="@+id/channels_count"
