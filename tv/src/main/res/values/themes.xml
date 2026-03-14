@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.Leanback">
+        <item name="android:fontFamily">@font/ubuntu</item>
+        <item name="fontFamily">@font/ubuntu</item>
+        <item name="android:textViewStyle">@style/UbuntuTextView</item>
+    </style>
+
+    <style name="UbuntuTextView" parent="android:Widget.TextView">
+        <item name="android:fontFamily">@font/ubuntu</item>
+        <item name="fontFamily">@font/ubuntu</item>
+    </style>
+</resources>

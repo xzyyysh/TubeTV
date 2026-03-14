@@ -6,4 +6,5 @@
     <string name="loading_text">...</string>
     <string name="channel_separator"> - </string>
     <string name="app_logo_description">TubeTV Logo</string>
+    <string name="channel_logo_description">Channel Logo</string>
 </resources>

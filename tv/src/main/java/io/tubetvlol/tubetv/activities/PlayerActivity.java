@@ -28,8 +28,8 @@ import androidx.media3.exoplayer.hls.HlsMediaSource;
 import java.util.HashMap;
 import java.util.Map;
 import io.tubetvlol.tubetv.R;
-import io.tubetvlol.tubetv.utils.Antena7Extractor;
-import io.tubetvlol.tubetv.utils.DailymotionExtractor;
+import io.tubetvlol.tubetv.utils.AntenaLatinaExtractor;
+import io.tubetvlol.tubetv.utils.TeleantillasExtractor;
 import io.tubetvlol.tubetv.utils.TelemicroExtractor;
 
 @UnstableApi
@@ -92,9 +92,9 @@ public class PlayerActivity extends Activity {
         String channelNumber = getIntent().getStringExtra("channel_number");
         String streamUrl = getIntent().getStringExtra("stream_url");
 
-        if (streamUrl.startsWith("dailymotion:")) {
-            String videoId = streamUrl.substring(12);
-            loadDailymotionStream(videoId);
+        if (streamUrl.startsWith("teleantillas:")) {
+            String videoId = streamUrl.substring(13);
+            loadTeleantillasStream(videoId);
         } else if (streamUrl.startsWith("telemicro:")) {
             isTelemicroStream = true;
             loadTelemicroStream();
@@ -167,9 +167,9 @@ public class PlayerActivity extends Activity {
         hideControlsHandler.postDelayed(hideControlsRunnable, CONTROLS_HIDE_DELAY);
     }
 
-    private void loadDailymotionStream(String videoId) {
+    private void loadTeleantillasStream(String videoId) {
         showLoading();
-        DailymotionExtractor.getStreamUrl(videoId, new DailymotionExtractor.StreamCallback() {
+        TeleantillasExtractor.getStreamUrl(videoId, new TeleantillasExtractor.StreamCallback() {
             @Override
             public void onSuccess(String streamUrl) {
                 runOnUiThread(() -> {
@@ -222,10 +222,10 @@ public class PlayerActivity extends Activity {
         hiddenWebView = new WebView(this);
         hiddenWebView.setVisibility(View.GONE);
         
-        Antena7Extractor.extractStreamUrl(hiddenWebView, antena7Url, new Antena7Extractor.ExtractionCallback() {
+        AntenaLatinaExtractor.extractStreamUrl(hiddenWebView, antena7Url, new AntenaLatinaExtractor.ExtractionCallback() {
             @Override
             public void onSuccess(String streamUrl) {
-                Log.d(TAG, "Antena 7 stream URL extracted: " + streamUrl);
+                Log.d(TAG, "Antena Latina stream URL extracted: " + streamUrl);
                 runOnUiThread(() -> {
                     if (isActivityActive) {
                         initializePlayer(streamUrl);
@@ -236,7 +236,7 @@ public class PlayerActivity extends Activity {
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "Antena 7 extraction error: " + error);
+                Log.e(TAG, "Antena Latina extraction error: " + error);
                 runOnUiThread(() -> {
                     if (isActivityActive) {
                         hideLoading();

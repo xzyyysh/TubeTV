@@ -7,17 +7,19 @@ public class Channel {
     private boolean enabled;
     private String description;
     private String streamUrl;
+    private String logo;
 
     public Channel() {
     }
 
-    public Channel(int id, String name, String number, boolean enabled, String description, String streamUrl) {
+    public Channel(int id, String name, String number, boolean enabled, String description, String streamUrl, String logo) {
         this.id = id;
         this.name = name;
         this.number = number;
         this.enabled = enabled;
         this.description = description;
         this.streamUrl = streamUrl;
+        this.logo = logo;
     }
 
     public int getId() {
@@ -66,5 +68,13 @@ public class Channel {
 
     public void setStreamUrl(String streamUrl) {
         this.streamUrl = streamUrl;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 }

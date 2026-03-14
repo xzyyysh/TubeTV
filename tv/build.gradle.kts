@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.cardview)
 
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.2.1")

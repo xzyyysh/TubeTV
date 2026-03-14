@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:orientation="horizontal"
-        android:background="?android:attr/colorPrimary"
+        android:background="#1E1E1E"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
         android:gravity="center_vertical"
@@ -42,8 +42,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/app_name"
                 android:textSize="24sp"
-                android:textColor="?android:attr/textColorPrimaryInverse"
-                android:fontFamily="sans-serif-medium" />
+                android:textColor="#FFFFFF"
+                android:fontFamily="@font/ubuntu_medium" />
 
         </LinearLayout>
 
@@ -52,8 +52,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="24sp"
-            android:textColor="?android:attr/textColorPrimaryInverse"
-            android:fontFamily="sans-serif" />
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/ubuntu" />
 
     </LinearLayout>
 
@@ -82,7 +82,7 @@
                 android:text="@string/channels_title"
                 android:textSize="22sp"
                 android:textColor="?android:attr/textColorPrimary"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="@font/ubuntu_medium" />
 
             <View
                 android:layout_width="0dp"
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
                 android:textColor="?android:attr/textColorSecondary"
-                android:fontFamily="sans-serif" />
+                android:fontFamily="@font/ubuntu" />
 
         </LinearLayout>
 

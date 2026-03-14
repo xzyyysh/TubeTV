@@ -3,6 +3,7 @@ package io.tubetvlol.tubetv.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -49,13 +50,17 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelV
     }
 
     class ChannelViewHolder extends RecyclerView.ViewHolder {
+        private ImageView channelLogo;
         private TextView channelNumber;
         private TextView channelName;
+        private TextView channelDescription;
 
         public ChannelViewHolder(@NonNull View itemView) {
             super(itemView);
+            channelLogo = itemView.findViewById(R.id.channel_logo);
             channelNumber = itemView.findViewById(R.id.channel_number);
             channelName = itemView.findViewById(R.id.channel_name);
+            channelDescription = itemView.findViewById(R.id.channel_description);
 
             itemView.setOnClickListener(v -> {
                 if (listener != null) {
@@ -70,6 +75,19 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelV
         public void bind(Channel channel) {
             channelNumber.setText(channel.getNumber());
             channelName.setText(channel.getName());
+            channelDescription.setText(channel.getDescription());
+            
+            if (channel.getLogo() != null && !channel.getLogo().isEmpty()) {
+                int logoResId = itemView.getContext().getResources()
+                        .getIdentifier(channel.getLogo(), "drawable", itemView.getContext().getPackageName());
+                if (logoResId != 0) {
+                    channelLogo.setImageResource(logoResId);
+                } else {
+                    channelLogo.setImageResource(R.drawable.tubetv_logo);
+                }
+            } else {
+                channelLogo.setImageResource(R.drawable.tubetv_logo);
+            }
         }
     }
 }

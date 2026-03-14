@@ -7,11 +7,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 
-public class DailymotionExtractor {
+public class TeleantillasExtractor {
 
-    private static final String TAG = "DailymotionExtractor";
+    private static final String TAG = "TeleantillasExtractor";
     private static final int CONNECT_TIMEOUT = 30000;
     private static final int READ_TIMEOUT = 30000;
     private static final int MAX_RETRIES = 3;
@@ -30,15 +29,14 @@ public class DailymotionExtractor {
                 try {
                     Log.d(TAG, "Attempting to fetch stream URL for video: " + videoId + " (attempt " + (retries + 1) + ")");
                     
-                    String embedder = URLEncoder.encode("https://www.dailymotion.com/video/" + videoId, "UTF-8");
                     String apiUrl = "https://geo.dailymotion.com/video/" + videoId + ".json" +
-                            "?legacy=true&geo=1&embedder=" + embedder;
+                            "?legacy=true&embedder=https://teleantillas.com.do/&geo=1";
 
                     URL url = new URL(apiUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
                     conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36");
-                    conn.setRequestProperty("Referer", "https://geo.dailymotion.com/");
+                    conn.setRequestProperty("Referer", "https://teleantillas.com.do/");
                     conn.setRequestProperty("Accept", "application/json");
                     conn.setConnectTimeout(CONNECT_TIMEOUT);
                     conn.setReadTimeout(READ_TIMEOUT);
@@ -105,36 +103,36 @@ public class DailymotionExtractor {
                         return;
 
                     } else if (responseCode == 403) {
-                        lastError = "Video blocked in your region (403)";
+                        lastError = "Video bloqueado en tu región (403)";
                         Log.e(TAG, lastError);
                         break;
                     } else if (responseCode == 404) {
-                        lastError = "Video not found (404)";
+                        lastError = "Video no encontrado (404)";
                         Log.e(TAG, lastError);
                         break;
                     } else {
-                        lastError = "HTTP error: " + responseCode;
+                        lastError = "Error HTTP: " + responseCode;
                         Log.e(TAG, lastError);
                     }
                     
                     conn.disconnect();
 
                 } catch (java.net.SocketTimeoutException e) {
-                    lastError = "Connection timeout (attempt " + (retries + 1) + ")";
+                    lastError = "Tiempo de espera agotado (intento " + (retries + 1) + ")";
                     Log.e(TAG, lastError, e);
                 } catch (java.net.UnknownHostException e) {
-                    lastError = "No internet connection";
+                    lastError = "Sin conexión a internet";
                     Log.e(TAG, lastError, e);
                     break;
                 } catch (org.json.JSONException e) {
-                    lastError = "Invalid JSON response: " + e.getMessage();
+                    lastError = "Respuesta JSON inválida: " + e.getMessage();
                     Log.e(TAG, lastError, e);
                     break;
                 } catch (Exception e) {
                     lastError = e.getMessage();
-                    Log.e(TAG, "Error extracting stream: " + lastError, e);
+                    Log.e(TAG, "Error extrayendo stream: " + lastError, e);
                     if (lastError != null && (lastError.contains("API error") || lastError.contains("private") || lastError.contains("DM020"))) {
-                        Log.e(TAG, "Video is private or restricted, stopping retries");
+                        Log.e(TAG, "Video privado o restringido, deteniendo reintentos");
                         break;
                     }
                 }
@@ -150,7 +148,7 @@ public class DailymotionExtractor {
                 }
             }
 
-            callback.onError(lastError != null ? lastError : "Unknown error after " + MAX_RETRIES + " retries");
+            callback.onError(lastError != null ? lastError : "Error desconocido después de " + MAX_RETRIES + " intentos");
         }).start();
     }
 }

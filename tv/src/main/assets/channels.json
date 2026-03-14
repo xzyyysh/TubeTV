@@ -6,7 +6,8 @@
       "number": "13",
       "enabled": true,
       "description": "Canal 13 - Telecentro",
-      "streamUrl": "telemicro:https://telemicro.com.do/telecentro-en-vivo/"
+      "streamUrl": "telemicro:https://telemicro.com.do/telecentro-en-vivo/",
+      "logo": "telecentrord"
     },
     {
       "id": 2,
@@ -14,15 +15,17 @@
       "number": "5",
       "enabled": true,
       "description": "Canal 5 - Telemicro",
-      "streamUrl": "telemicro:https://telemicro.com.do/telemicro-en-vivo/"
+      "streamUrl": "telemicro:https://telemicro.com.do/telemicro-en-vivo/",
+      "logo": "telemicrord"
     },
     {
       "id": 3,
-      "name": "Teleantillas",
-      "number": "2",
+      "name": "Teleantillas 10",
+      "number": "10",
       "enabled": true,
-      "description": "Canal 2 - Teleantillas",
-      "streamUrl": "dailymotion:x8mwmvs"
+      "description": "Canal 10 - Teleantillas",
+      "streamUrl": "teleantillas:x8mwmvs",
+      "logo": "teleantillas10rd"
     },
     {
       "id": 4,
@@ -30,7 +33,8 @@
       "number": "15",
       "enabled": true,
       "description": "Canal 15 - Digital 15",
-      "streamUrl": "telemicro:https://telemicro.com.do/digital-15-en-vivo/"
+      "streamUrl": "telemicro:https://telemicro.com.do/digital-15-en-vivo/",
+      "logo": "digitalquincerd"
     },
     {
       "id": 5,
@@ -38,7 +42,8 @@
       "number": "7",
       "enabled": true,
       "description": "Canal 7 - Antena 7",
-      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-7/"
+      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-7/",
+      "logo": "antenalatina7rd"
     },
     {
       "id": 6,
@@ -46,7 +51,8 @@
       "number": "21",
       "enabled": true,
       "description": "Canal 21 - Antena 21",
-      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-21/"
+      "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-21/",
+      "logo": "antenalatina21rd"
     }
   ]
 }

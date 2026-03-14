@@ -9,8 +9,8 @@ import android.webkit.WebViewClient;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Antena7Extractor {
-    private static final String TAG = "Antena7Extractor";
+public class AntenaLatinaExtractor {
+    private static final String TAG = "AntenaLatinaExtractor";
     private static final int INITIAL_WAIT = 3000;
     private static final int PLAY_WAIT = 2000;
     private static final int EXTENDED_WAIT = 8000;

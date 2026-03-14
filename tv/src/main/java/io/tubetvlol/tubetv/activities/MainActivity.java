@@ -93,14 +93,14 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             @Override
             public void run() {
                 updateTime();
-                timeHandler.postDelayed(this, 1000);
+                timeHandler.postDelayed(this, 60000);
             }
         };
         timeHandler.post(timeRunnable);
     }
 
     private void updateTime() {
-        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm:ss a", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
         String currentTime = timeFormat.format(new Date());
         currentTimeTextView.setText(currentTime);
     }
@@ -117,13 +117,15 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
                 boolean enabled = channelObj.getBoolean("enabled");
                 if (enabled) {
+                    String logo = channelObj.optString("logo", "");
                     Channel channel = new Channel(
                         channelObj.getInt("id"),
                         channelObj.getString("name"),
                         channelObj.getString("number"),
                         enabled,
                         channelObj.getString("description"),
-                        channelObj.getString("streamUrl")
+                        channelObj.getString("streamUrl"),
+                        logo
                     );
                     channelList.add(channel);
                 }
