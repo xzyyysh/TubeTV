@@ -53,6 +53,15 @@
       "description": "Canal 21 - Antena 21",
       "streamUrl": "antena7:https://www.antena7.com.do/envivo-canal-21/",
       "logo": "antenalatina21rd"
+    },
+    {
+      "id": 7,
+      "name": "Telesistema 11",
+      "number": "11",
+      "enabled": true,
+      "description": "Canal 11 - Telesistema",
+      "streamUrl": "telesistema:x80ac48",
+      "logo": "telesistema11rd"
     }
   ]
 }
