@@ -1,264 +1,201 @@
 package io.tubetvlol.tubetv.utils;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AntenaLatinaExtractor {
     private static final String TAG = "AntenaLatinaExtractor";
-    private static final int INITIAL_WAIT = 3000;
-    private static final int PLAY_WAIT = 2000;
-    private static final int EXTENDED_WAIT = 8000;
-    private static final int MAX_RETRIES = 2;
+    private static final String REFERER = "https://www.antena7.com.do/";
+    private static final int TIMEOUT_MS = 8000;
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public interface ExtractionCallback {
         void onSuccess(String streamUrl);
         void onError(String error);
     }
 
-    public static void extractStreamUrl(WebView webView, String pageUrl, ExtractionCallback callback) {
-        extractWithRetry(webView, pageUrl, callback, 0);
-    }
-
-    private static void extractWithRetry(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
-        if (retryCount >= MAX_RETRIES) {
-            callback.onError("Failed to extract stream URL after " + MAX_RETRIES + " attempts");
-            return;
-        }
-
-        Log.d(TAG, "Attempt " + (retryCount + 1) + " - Loading page: " + pageUrl);
-
-        Handler handler = new Handler(Looper.getMainLooper());
-
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-        webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-        webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                Log.d(TAG, "Page loaded, waiting for player initialization...");
-
-                handler.postDelayed(() -> {
-                    checkVideoElement(view, handler, pageUrl, callback, retryCount);
-                }, INITIAL_WAIT);
-            }
-
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                Log.e(TAG, "WebView error: " + description);
-                callback.onError("WebView error: " + description);
-            }
-        });
-
-        webView.loadUrl(pageUrl);
-    }
-
-    private static void checkVideoElement(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
-        Log.d(TAG, "Method 1: Checking for video element in main DOM...");
-        String jsCode = "(function() {" +
-                "  const video = document.querySelector('video');" +
-                "  if (video && video.src && video.src.includes('.m3u8')) {" +
-                "    return video.src;" +
-                "  }" +
-                "  if (video && video.currentSrc && video.currentSrc.includes('.m3u8')) {" +
-                "    return video.currentSrc;" +
-                "  }" +
-                "  return null;" +
-                "})();";
-
-        webView.evaluateJavascript(jsCode, result -> {
-            if (result != null && !result.equals("null") && result.contains(".m3u8")) {
-                String cleanUrl = cleanStreamUrl(result.replace("\"", ""));
-                Log.d(TAG, "Found stream URL from video element: " + cleanUrl);
-                callback.onSuccess(cleanUrl);
-            } else {
-                Log.d(TAG, "Method 2: Clicking play and waiting longer...");
-                handler.postDelayed(() -> {
-                    tryClickPlayButton(webView, handler, pageUrl, callback, retryCount);
-                }, 1000);
-            }
-        });
-    }
-
-    private static void tryClickPlayButton(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
-        String clickJs = "(function() {" +
-                "  const playButton = document.querySelector('button[aria-label*=\"play\"], media-play-button');" +
-                "  if (playButton) {" +
-                "    playButton.click();" +
-                "    return 'clicked';" +
-                "  }" +
-                "  return 'not_found';" +
-                "})();";
-
-        webView.evaluateJavascript(clickJs, result -> {
-            if (result != null && result.contains("clicked")) {
-                Log.d(TAG, "Clicked play button");
-            } else {
-                Log.d(TAG, "Could not find play button, continuing...");
-            }
-
-            handler.postDelayed(() -> {
-                checkShadowDOM(webView, handler, pageUrl, callback, retryCount);
-            }, PLAY_WAIT);
-        });
-    }
-
-    private static void checkShadowDOM(WebView webView, Handler handler, String pageUrl, ExtractionCallback callback, int retryCount) {
-        Log.d(TAG, "Method 3: Checking video element in shadow DOM...");
-        
-        handler.postDelayed(() -> {
-            String jsCode = "(function() {" +
-                    "  const mediaChrome = document.querySelector('adjacent-media-chrome-mux');" +
-                    "  if (mediaChrome && mediaChrome.shadowRoot) {" +
-                    "    const mediaController = mediaChrome.shadowRoot.querySelector('media-controller');" +
-                    "    if (mediaController && mediaController.shadowRoot) {" +
-                    "      const video = mediaController.shadowRoot.querySelector('video');" +
-                    "      if (video && video.src && !video.src.startsWith('blob:')) {" +
-                    "        return video.src;" +
-                    "      }" +
-                    "      if (video && video.currentSrc && !video.currentSrc.startsWith('blob:')) {" +
-                    "        return video.currentSrc;" +
-                    "      }" +
-                    "    }" +
-                    "    const video = mediaChrome.shadowRoot.querySelector('video');" +
-                    "    if (video && video.src && !video.src.startsWith('blob:')) {" +
-                    "      return video.src;" +
-                    "    }" +
-                    "    if (video && video.currentSrc && !video.currentSrc.startsWith('blob:')) {" +
-                    "      return video.currentSrc;" +
-                    "    }" +
-                    "  }" +
-                    "  const allElements = document.querySelectorAll('*');" +
-                    "  for (let el of allElements) {" +
-                    "    if (el.shadowRoot) {" +
-                    "      const vid = el.shadowRoot.querySelector('video');" +
-                    "      if (vid && vid.src && !vid.src.startsWith('blob:')) {" +
-                    "        return vid.src;" +
-                    "      }" +
-                    "      if (vid && vid.currentSrc && !vid.currentSrc.startsWith('blob:')) {" +
-                    "        return vid.currentSrc;" +
-                    "      }" +
-                    "    }" +
-                    "  }" +
-                    "  return null;" +
-                    "})();";
-
-            webView.evaluateJavascript(jsCode, result -> {
-                if (result != null && !result.equals("null") && result.contains(".m3u8")) {
-                    String cleanUrl = cleanStreamUrl(result.replace("\"", ""));
-                    Log.d(TAG, "Found stream URL from shadow DOM: " + cleanUrl);
-                    callback.onSuccess(cleanUrl);
-                } else {
-                    Log.d(TAG, "Method 4: Checking window.Adjacent object...");
-                    checkAdjacentObject(webView, pageUrl, callback, retryCount);
+    public static void extractStreamUrl(String pageUrl, ExtractionCallback callback) {
+        executor.execute(() -> {
+            try {
+                String htmlContent = fetchPageContent(pageUrl);
+                if (htmlContent == null) {
+                    callback.onError("Failed to fetch page content");
+                    return;
                 }
-            });
-        }, EXTENDED_WAIT);
-    }
 
-    private static void checkAdjacentObject(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
-        String jsCode = "(function() {" +
-                "  const adjacent = window.Adjacent;" +
-                "  if (!adjacent) return null;" +
-                "  const findM3u8 = function(obj, path) {" +
-                "    if (typeof obj === 'string' && obj.includes('.m3u8') && obj.includes('cloudfront')) {" +
-                "      return obj;" +
-                "    }" +
-                "    if (typeof obj === 'object' && obj !== null) {" +
-                "      for (const key in obj) {" +
-                "        const result = findM3u8(obj[key], (path || '') + '.' + key);" +
-                "        if (result) return result;" +
-                "      }" +
-                "    }" +
-                "    return null;" +
-                "  };" +
-                "  if (adjacent.adjacentResponse) {" +
-                "    const url = findM3u8(adjacent.adjacentResponse);" +
-                "    if (url) return url;" +
-                "  }" +
-                "  if (adjacent.publisherResponse) {" +
-                "    const url = findM3u8(adjacent.publisherResponse);" +
-                "    if (url) return url;" +
-                "  }" +
-                "  if (adjacent.publisherObject) {" +
-                "    const url = findM3u8(adjacent.publisherObject);" +
-                "    if (url) return url;" +
-                "  }" +
-                "  return null;" +
-                "})();";
+                List<String> streamUrls = extractStreamUrlsFromHtml(htmlContent);
+                if (streamUrls.isEmpty()) {
+                    callback.onError("No stream URLs found in page");
+                    return;
+                }
 
-        webView.evaluateJavascript(jsCode, result -> {
-            if (result != null && !result.equals("null") && result.contains(".m3u8")) {
-                String cleanUrl = cleanStreamUrl(result.replace("\"", ""));
-                Log.d(TAG, "Found stream URL from Adjacent object: " + cleanUrl);
-                callback.onSuccess(cleanUrl);
-            } else {
-                Log.d(TAG, "Method 5: Checking page source with regex...");
-                extractFromPageSource(webView, pageUrl, callback, retryCount);
+                String workingUrl = findWorkingStreamUrl(streamUrls);
+                if (workingUrl != null) {
+                    String finalUrl = resolveStreamUrl(workingUrl);
+                    Log.d(TAG, "Stream URL extracted: " + finalUrl);
+                    callback.onSuccess(finalUrl);
+                } else {
+                    Log.e(TAG, "All stream URLs failed validation");
+                    callback.onError("Stream not available (all URLs failed)");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error extracting stream URL", e);
+                callback.onError("Error: " + e.getMessage());
             }
         });
     }
 
-    private static void extractFromPageSource(WebView webView, String pageUrl, ExtractionCallback callback, int retryCount) {
-        String jsCode = "document.documentElement.outerHTML;";
+    private static String fetchPageContent(String urlString) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36");
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
 
-        webView.evaluateJavascript(jsCode, html -> {
-            if (html != null) {
-                String cleanHtml = html.replace("\\u003C", "<")
-                        .replace("\\u003E", ">")
-                        .replace("\\\"", "\"")
-                        .replace("\\/", "/")
-                        .replace("\\\\", "");
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append("\n");
+                }
+                reader.close();
+                return response.toString();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching page content", e);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return null;
+    }
 
-                Log.d(TAG, "HTML length: " + cleanHtml.length());
-
-                Pattern pattern = Pattern.compile("https://d2qsan2ut81n2k\\.cloudfront\\.net/live/[a-f0-9\\-]+/[^\\s\"'<>]+\\.m3u8");
-                Matcher matcher = pattern.matcher(cleanHtml);
-
-                if (matcher.find()) {
-                    String streamUrl = cleanStreamUrl(matcher.group());
-                    Log.d(TAG, "Found stream URL in page source: " + streamUrl);
-                    callback.onSuccess(streamUrl);
-                } else {
-                    Pattern simplePattern = Pattern.compile("d2qsan2ut81n2k\\.cloudfront\\.net[^\\s\"'<>]+m3u8");
-                    Matcher simpleMatcher = simplePattern.matcher(cleanHtml);
-                    
-                    if (simpleMatcher.find()) {
-                        String partialUrl = simpleMatcher.group();
-                        String streamUrl = cleanStreamUrl("https://" + partialUrl);
-                        Log.d(TAG, "Found stream URL with simple pattern: " + streamUrl);
-                        callback.onSuccess(streamUrl);
-                    } else {
-                        Log.e(TAG, "No stream URL found in page source");
-                        Log.d(TAG, "HTML sample: " + cleanHtml.substring(0, Math.min(500, cleanHtml.length())));
-                        extractWithRetry(webView, pageUrl, callback, retryCount + 1);
+    private static List<String> extractStreamUrlsFromHtml(String html) {
+        List<String> urls = new ArrayList<>();
+        
+        Pattern pattern = Pattern.compile("\"streamUrl\"\\s*:\\s*\"([^\"]+)\"");
+        Matcher matcher = pattern.matcher(html);
+        
+        if (matcher.find()) {
+            String streamUrl = matcher.group(1);
+            streamUrl = streamUrl.replace("\\/", "/");
+            
+            if (streamUrl.contains("#")) {
+                String[] parts = streamUrl.split("#");
+                for (String part : parts) {
+                    if (part.contains(".m3u8")) {
+                        urls.add(part.trim());
                     }
                 }
-            } else {
-                Log.e(TAG, "Failed to get page source");
-                extractWithRetry(webView, pageUrl, callback, retryCount + 1);
+            } else if (streamUrl.contains(".m3u8")) {
+                urls.add(streamUrl.trim());
             }
-        });
+        }
+        
+        return urls;
     }
 
-    private static String cleanStreamUrl(String url) {
-        if (url == null || url.isEmpty()) {
+    private static String findWorkingStreamUrl(List<String> urls) {
+        if (urls.isEmpty()) {
             return null;
         }
         
-        url = url.replace("\\/", "/");
-        
-        if (url.contains("#")) {
-            url = url.substring(0, url.indexOf("#"));
+        for (String url : urls) {
+            Log.d(TAG, "Testing stream URL: " + url);
+            if (testStreamUrl(url)) {
+                Log.d(TAG, "Working stream URL found: " + url);
+                return url;
+            }
         }
         
-        return url;
+        Log.w(TAG, "All URLs failed validation");
+        return null;
+    }
+
+    private static boolean testStreamUrl(String urlString) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setRequestProperty("Origin", "https://www.antena7.com.do");
+            connection.setRequestProperty("Referer", REFERER);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36");
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+
+            int responseCode = connection.getResponseCode();
+            return responseCode == HttpURLConnection.HTTP_OK || 
+                   responseCode == HttpURLConnection.HTTP_PARTIAL || 
+                   responseCode == HttpURLConnection.HTTP_NOT_MODIFIED;
+        } catch (Exception e) {
+            Log.e(TAG, "Error testing stream URL: " + urlString, e);
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private static String resolveStreamUrl(String indexUrl) {
+        String manifest = fetchManifest(indexUrl);
+        if (manifest != null && manifest.contains("original.m3u8")) {
+            String baseUrl = indexUrl.substring(0, indexUrl.lastIndexOf("/"));
+            return baseUrl + "/original.m3u8";
+        }
+        return indexUrl;
+    }
+
+    private static String fetchManifest(String urlString) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Origin", "https://www.antena7.com.do");
+            connection.setRequestProperty("Referer", REFERER);
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36");
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line).append("\n");
+                }
+                reader.close();
+                return response.toString();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error fetching manifest", e);
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return null;
     }
 }

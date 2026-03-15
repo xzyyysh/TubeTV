@@ -31,6 +31,8 @@ import io.tubetvlol.tubetv.R;
 import io.tubetvlol.tubetv.utils.AntenaLatinaExtractor;
 import io.tubetvlol.tubetv.utils.TeleantillasExtractor;
 import io.tubetvlol.tubetv.utils.TelemicroExtractor;
+import io.tubetvlol.tubetv.utils.TelesistemaExtractor;
+import io.tubetvlol.tubetv.utils.RtvdExtractor;
 
 @UnstableApi
 public class PlayerActivity extends Activity {
@@ -100,6 +102,11 @@ public class PlayerActivity extends Activity {
             loadTelemicroStream();
         } else if (streamUrl.startsWith("antena7:")) {
             loadAntena7Stream();
+        } else if (streamUrl.startsWith("telesistema:")) {
+            String videoId = streamUrl.substring(12);
+            loadTelesistemaStream(videoId);
+        } else if (streamUrl.startsWith("rtvd:")) {
+            loadRtvdStream();
         } else {
             initializePlayer(streamUrl);
         }
@@ -219,17 +226,14 @@ public class PlayerActivity extends Activity {
         Log.d(TAG, "Loading Antena 7 stream from: " + antena7Url);
         
         showLoading();
-        hiddenWebView = new WebView(this);
-        hiddenWebView.setVisibility(View.GONE);
         
-        AntenaLatinaExtractor.extractStreamUrl(hiddenWebView, antena7Url, new AntenaLatinaExtractor.ExtractionCallback() {
+        AntenaLatinaExtractor.extractStreamUrl(antena7Url, new AntenaLatinaExtractor.ExtractionCallback() {
             @Override
             public void onSuccess(String streamUrl) {
                 Log.d(TAG, "Antena Latina stream URL extracted: " + streamUrl);
                 runOnUiThread(() -> {
                     if (isActivityActive) {
                         initializePlayer(streamUrl);
-                        cleanupWebView();
                     }
                 });
             }
@@ -241,7 +245,66 @@ public class PlayerActivity extends Activity {
                     if (isActivityActive) {
                         hideLoading();
                         Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
-                        cleanupWebView();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadTelesistemaStream(String videoId) {
+        Log.d(TAG, "Loading Telesistema stream for video: " + videoId);
+        
+        showLoading();
+        
+        TelesistemaExtractor.getStreamUrl(videoId, new TelesistemaExtractor.StreamCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "Telesistema stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Telesistema extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadRtvdStream() {
+        Log.d(TAG, "Loading RTVD stream");
+        
+        showLoading();
+        
+        RtvdExtractor.extractStreamUrl(new RtvdExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "RTVD stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "RTVD extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
                         finish();
                     }
                 });
