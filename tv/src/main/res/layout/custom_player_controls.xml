@@ -29,30 +29,4 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <View
-            android:id="@+id/live_indicator"
-            android:layout_width="match_parent"
-            android:layout_height="4dp"
-            android:background="#FF0000"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/live_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/live_text"
-            android:textColor="#FF0000"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_gravity="end" />
-
-    </LinearLayout>
-
 </FrameLayout>

@@ -15,6 +15,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelV
 
     private List<Channel> channels;
     private OnChannelClickListener listener;
+    private boolean showChannelNumbers = true;
 
     public interface OnChannelClickListener {
         void onChannelClick(Channel channel);
@@ -49,6 +50,11 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelV
         notifyDataSetChanged();
     }
 
+    public void setShowChannelNumbers(boolean show) {
+        this.showChannelNumbers = show;
+        notifyDataSetChanged();
+    }
+
     class ChannelViewHolder extends RecyclerView.ViewHolder {
         private ImageView channelLogo;
         private TextView channelNumber;
@@ -74,6 +80,7 @@ public class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ChannelV
 
         public void bind(Channel channel) {
             channelNumber.setText(channel.getNumber());
+            channelNumber.setVisibility(showChannelNumbers ? View.VISIBLE : View.GONE);
             channelName.setText(channel.getName());
             channelDescription.setText(channel.getDescription());
             

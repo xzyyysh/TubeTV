@@ -47,6 +47,20 @@
 
         </LinearLayout>
 
+        <ImageButton
+            android:id="@+id/settings_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="16dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:scaleType="fitCenter"
+            android:contentDescription="Settings"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:clickable="true"
+            app:tint="#FFFFFF" />
+
         <TextView
             android:id="@+id/current_time"
             android:layout_width="wrap_content"
@@ -110,5 +124,7 @@
             android:scrollbars="vertical" />
 
     </LinearLayout>
+
+    <include layout="@layout/settings_section" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

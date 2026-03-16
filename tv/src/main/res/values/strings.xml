@@ -7,4 +7,15 @@
     <string name="channel_separator"> - </string>
     <string name="app_logo_description">TubeTV Logo</string>
     <string name="channel_logo_description">Channel Logo</string>
+    <string name="settings_title">Configuración</string>
+    <string name="back_button">Atrás</string>
+    <string name="player_settings">Configuración del Reproductor</string>
+    <string name="display_settings">Configuración de Pantalla</string>
+    <string name="about_section">Acerca de</string>
+    <string name="auto_hide_controls">Ocultar controles automáticamente</string>
+    <string name="keep_screen_on">Mantener pantalla encendida</string>
+    <string name="show_channel_numbers">Mostrar números de canal</string>
+    <string name="grid_columns">Columnas de la grilla</string>
+    <string name="app_version">Version 1.0.0</string>
+    <string name="app_credits">TubeTV Maintainer, xzyyysh (Aka: F3l1x)</string>
 </resources>

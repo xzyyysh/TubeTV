@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="controls_timeout_options">
+        <item>3 segundos</item>
+        <item>5 segundos</item>
+        <item>10 segundos</item>
+        <item>Nunca ocultar</item>
+    </string-array>
+
+    <string-array name="controls_timeout_values">
+        <item>3000</item>
+        <item>5000</item>
+        <item>10000</item>
+        <item>0</item>
+    </string-array>
+
+    <string-array name="grid_columns_options">
+        <item>2 columnas</item>
+        <item>3 columnas</item>
+        <item>4 columnas</item>
+    </string-array>
+
+    <string-array name="grid_columns_values">
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+</resources>

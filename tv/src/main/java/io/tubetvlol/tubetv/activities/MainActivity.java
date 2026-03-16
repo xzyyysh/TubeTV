@@ -7,10 +7,22 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
+import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
+import android.widget.Switch;
+import android.widget.FrameLayout;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowInsets;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import org.json.JSONArray;
@@ -26,6 +38,7 @@ import java.util.Locale;
 import io.tubetvlol.tubetv.R;
 import io.tubetvlol.tubetv.models.Channel;
 import io.tubetvlol.tubetv.adapters.ChannelAdapter;
+import io.tubetvlol.tubetv.utils.PreferencesManager;
 
 @UnstableApi
 public class MainActivity extends Activity implements ChannelAdapter.OnChannelClickListener {
@@ -37,6 +50,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private RecyclerView channelsRecyclerView;
     private ChannelAdapter channelAdapter;
     private List<Channel> channelList;
+    private ImageButton settingsButton;
+    private ImageButton backButton;
+    private LinearLayout contentArea;
+    private FrameLayout settingsOverlay;
+    private LinearLayout settingsDialog;
+    private boolean isSettingsVisible = false;
+    private PreferencesManager prefsManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +64,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         setContentView(R.layout.activity_main);
         hideSystemUI();
 
+        prefsManager = new PreferencesManager(this);
         initializeViews();
         setupFadeInAnimation();
         startTimeUpdater();
@@ -70,13 +91,23 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         currentTimeTextView = findViewById(R.id.current_time);
         channelsCountTextView = findViewById(R.id.channels_count);
         channelsRecyclerView = findViewById(R.id.channels_recycler_view);
+        settingsButton = findViewById(R.id.settings_button);
+        backButton = findViewById(R.id.back_button);
+        contentArea = findViewById(R.id.content_area);
+        settingsOverlay = findViewById(R.id.settings_overlay);
+        settingsDialog = findViewById(R.id.settings_dialog);
 
         channelList = new ArrayList<>();
         channelAdapter = new ChannelAdapter(channelList, this);
 
-        GridLayoutManager layoutManager = new GridLayoutManager(this, 2);
+        int savedColumns = prefsManager.getGridColumns();
+        GridLayoutManager layoutManager = new GridLayoutManager(this, savedColumns);
         channelsRecyclerView.setLayoutManager(layoutManager);
         channelsRecyclerView.setAdapter(channelAdapter);
+
+        channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
+
+        setupSettingsListeners();
     }
 
     private void setupFadeInAnimation() {
@@ -162,11 +193,150 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         channelsCountTextView.setText(countText);
     }
 
+    private void setupSettingsListeners() {
+        settingsButton.setOnClickListener(v -> showSettings());
+        backButton.setOnClickListener(v -> hideSettings());
+        settingsOverlay.setOnClickListener(v -> {
+            if (v == settingsOverlay) {
+                hideSettings();
+            }
+        });
+        initializeSettingsControls();
+    }
+
+    private void initializeSettingsControls() {
+        Spinner controlsTimeoutSpinner = findViewById(R.id.controls_timeout_spinner);
+        Spinner gridColumnsSpinner = findViewById(R.id.grid_columns_spinner);
+        Switch showChannelNumbersSwitch = findViewById(R.id.show_channel_numbers_switch);
+        Switch keepScreenOnSwitch = findViewById(R.id.keep_screen_on_switch);
+
+        ArrayAdapter<CharSequence> timeoutAdapter = ArrayAdapter.createFromResource(this,
+                R.array.controls_timeout_options, android.R.layout.simple_spinner_item);
+        timeoutAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        controlsTimeoutSpinner.setAdapter(timeoutAdapter);
+
+        ArrayAdapter<CharSequence> columnsAdapter = ArrayAdapter.createFromResource(this,
+                R.array.grid_columns_options, android.R.layout.simple_spinner_item);
+        columnsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        gridColumnsSpinner.setAdapter(columnsAdapter);
+
+        loadSettingsValues(controlsTimeoutSpinner, gridColumnsSpinner, showChannelNumbersSwitch, keepScreenOnSwitch);
+
+        controlsTimeoutSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String[] values = getResources().getStringArray(R.array.controls_timeout_values);
+                int timeout = Integer.parseInt(values[position]);
+                prefsManager.setControlsTimeout(timeout);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        gridColumnsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int columns = position + 2;
+                prefsManager.setGridColumns(columns);
+                GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, columns);
+                channelsRecyclerView.setLayoutManager(layoutManager);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        showChannelNumbersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefsManager.setShowChannelNumbers(isChecked);
+            channelAdapter.setShowChannelNumbers(isChecked);
+        });
+
+        keepScreenOnSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefsManager.setKeepScreenOn(isChecked);
+        });
+    }
+
+    private void loadSettingsValues(Spinner timeoutSpinner, Spinner columnsSpinner, 
+                                   Switch numbersSwitch, Switch screenSwitch) {
+        int savedTimeout = prefsManager.getControlsTimeout();
+        String[] timeoutValues = getResources().getStringArray(R.array.controls_timeout_values);
+        for (int i = 0; i < timeoutValues.length; i++) {
+            if (Integer.parseInt(timeoutValues[i]) == savedTimeout) {
+                timeoutSpinner.setSelection(i);
+                break;
+            }
+        }
+
+        int savedColumns = prefsManager.getGridColumns();
+        columnsSpinner.setSelection(savedColumns - 2);
+
+        numbersSwitch.setChecked(prefsManager.getShowChannelNumbers());
+        screenSwitch.setChecked(prefsManager.getKeepScreenOn());
+    }
+
+    private void showSettings() {
+        if (!isSettingsVisible) {
+            settingsOverlay.setVisibility(View.VISIBLE);
+            
+            AlphaAnimation overlayFadeIn = new AlphaAnimation(0.0f, 1.0f);
+            overlayFadeIn.setDuration(200);
+            
+            AlphaAnimation dialogFadeIn = new AlphaAnimation(0.0f, 1.0f);
+            dialogFadeIn.setDuration(300);
+            dialogFadeIn.setStartOffset(100);
+            
+            settingsOverlay.startAnimation(overlayFadeIn);
+            settingsDialog.startAnimation(dialogFadeIn);
+            
+            isSettingsVisible = true;
+        }
+    }
+
+    private void hideSettings() {
+        if (isSettingsVisible) {
+            AlphaAnimation overlayFadeOut = new AlphaAnimation(1.0f, 0.0f);
+            overlayFadeOut.setDuration(200);
+            overlayFadeOut.setStartOffset(100);
+            
+            AlphaAnimation dialogFadeOut = new AlphaAnimation(1.0f, 0.0f);
+            dialogFadeOut.setDuration(250);
+            
+            overlayFadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {}
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    settingsOverlay.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {}
+            });
+            
+            settingsOverlay.startAnimation(overlayFadeOut);
+            settingsDialog.startAnimation(dialogFadeOut);
+            
+            isSettingsVisible = false;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (isSettingsVisible) {
+            hideSettings();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
     @Override
     public void onChannelClick(Channel channel) {
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("channel_name", channel.getName());
         intent.putExtra("channel_number", channel.getNumber());
+        intent.putExtra("channel_logo", channel.getLogo());
         intent.putExtra("stream_url", channel.getStreamUrl());
         startActivity(intent);
     }

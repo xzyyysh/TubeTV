@@ -71,6 +71,15 @@
       "description": "Canal 4 - RTVD",
       "streamUrl": "rtvd:",
       "logo": "rtvd4rd"
+    },
+    {
+      "id": 9,
+      "name": "CDN",
+      "number": "37",
+      "enabled": true,
+      "description": "Canal 37 - CDN El Canal de Noticias",
+      "streamUrl": "cdn:",
+      "logo": "cdn37rd"
     }
   ]
 }

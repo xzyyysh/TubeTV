@@ -16,6 +16,8 @@ import android.view.animation.Animation;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.media3.common.MediaItem;
@@ -33,6 +35,8 @@ import io.tubetvlol.tubetv.utils.TeleantillasExtractor;
 import io.tubetvlol.tubetv.utils.TelemicroExtractor;
 import io.tubetvlol.tubetv.utils.TelesistemaExtractor;
 import io.tubetvlol.tubetv.utils.RtvdExtractor;
+import io.tubetvlol.tubetv.utils.CdnExtractor;
+import io.tubetvlol.tubetv.utils.PreferencesManager;
 
 @UnstableApi
 public class PlayerActivity extends Activity {
@@ -52,6 +56,10 @@ public class PlayerActivity extends Activity {
     private Runnable loadingRunnable;
     private int loadingDotCount = 0;
     private boolean isActivityActive = false;
+    private LinearLayout channelHeader;
+    private ImageView channelHeaderLogo;
+    private TextView channelHeaderName;
+    private PreferencesManager prefsManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +67,11 @@ public class PlayerActivity extends Activity {
         setContentView(R.layout.activity_player);
         
         isActivityActive = true;
+        prefsManager = new PreferencesManager(this);
         
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (prefsManager.getKeepScreenOn()) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
         
         hideSystemUI();
 
@@ -68,6 +79,9 @@ public class PlayerActivity extends Activity {
         controlsContainer = findViewById(R.id.controls_container);
         playPauseButton = findViewById(R.id.play_pause_button);
         loadingText = findViewById(R.id.loading_text);
+        channelHeader = findViewById(R.id.channel_header);
+        channelHeaderLogo = findViewById(R.id.channel_header_logo);
+        channelHeaderName = findViewById(R.id.channel_header_name);
 
         loadingHandler = new Handler(Looper.getMainLooper());
         loadingRunnable = new Runnable() {
@@ -92,7 +106,10 @@ public class PlayerActivity extends Activity {
 
         String channelName = getIntent().getStringExtra("channel_name");
         String channelNumber = getIntent().getStringExtra("channel_number");
+        String channelLogo = getIntent().getStringExtra("channel_logo");
         String streamUrl = getIntent().getStringExtra("stream_url");
+
+        setupChannelHeader(channelName, channelLogo);
 
         if (streamUrl.startsWith("teleantillas:")) {
             String videoId = streamUrl.substring(13);
@@ -107,6 +124,8 @@ public class PlayerActivity extends Activity {
             loadTelesistemaStream(videoId);
         } else if (streamUrl.startsWith("rtvd:")) {
             loadRtvdStream();
+        } else if (streamUrl.startsWith("cdn:")) {
+            loadCdnStream();
         } else {
             initializePlayer(streamUrl);
         }
@@ -133,6 +152,19 @@ public class PlayerActivity extends Activity {
         });
     }
 
+    private void setupChannelHeader(String channelName, String channelLogo) {
+        if (channelName != null) {
+            channelHeaderName.setText(channelName);
+        }
+        
+        if (channelLogo != null && !channelLogo.isEmpty()) {
+            int logoResId = getResources().getIdentifier(channelLogo, "drawable", getPackageName());
+            if (logoResId != 0) {
+                channelHeaderLogo.setImageResource(logoResId);
+            }
+        }
+    }
+
     private void toggleControls() {
         if (controlsContainer.getVisibility() == View.VISIBLE) {
             hideControls();
@@ -143,9 +175,11 @@ public class PlayerActivity extends Activity {
 
     private void showControls() {
         controlsContainer.setVisibility(View.VISIBLE);
+        channelHeader.setVisibility(View.VISIBLE);
         AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
         fadeIn.setDuration(300);
         controlsContainer.startAnimation(fadeIn);
+        channelHeader.startAnimation(fadeIn);
         playPauseButton.requestFocus();
         resetHideControlsTimer();
     }
@@ -160,18 +194,23 @@ public class PlayerActivity extends Activity {
             @Override
             public void onAnimationEnd(Animation animation) {
                 controlsContainer.setVisibility(View.GONE);
+                channelHeader.setVisibility(View.GONE);
             }
 
             @Override
             public void onAnimationRepeat(Animation animation) {}
         });
         controlsContainer.startAnimation(fadeOut);
+        channelHeader.startAnimation(fadeOut);
         hideControlsHandler.removeCallbacks(hideControlsRunnable);
     }
 
     private void resetHideControlsTimer() {
         hideControlsHandler.removeCallbacks(hideControlsRunnable);
-        hideControlsHandler.postDelayed(hideControlsRunnable, CONTROLS_HIDE_DELAY);
+        int timeout = prefsManager.getControlsTimeout();
+        if (timeout > 0) {
+            hideControlsHandler.postDelayed(hideControlsRunnable, timeout);
+        }
     }
 
     private void loadTeleantillasStream(String videoId) {
@@ -301,6 +340,36 @@ public class PlayerActivity extends Activity {
             @Override
             public void onError(String error) {
                 Log.e(TAG, "RTVD extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadCdnStream() {
+        Log.d(TAG, "Loading CDN stream");
+        
+        showLoading();
+        
+        CdnExtractor.getStreamUrl(new CdnExtractor.StreamCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "CDN stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "CDN extraction error: " + error);
                 runOnUiThread(() -> {
                     if (isActivityActive) {
                         hideLoading();
