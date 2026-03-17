@@ -27,6 +27,8 @@ import androidx.media3.ui.PlayerView;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import java.util.HashMap;
 import java.util.Map;
 import io.tubetvlol.tubetv.R;
@@ -60,6 +62,11 @@ public class PlayerActivity extends Activity {
     private ImageView channelHeaderLogo;
     private TextView channelHeaderName;
     private PreferencesManager prefsManager;
+    private FirebaseAnalytics analytics;
+    private FirebaseCrashlytics crashlytics;
+    private long playbackStartTime;
+    private String currentChannelName;
+    private String currentChannelNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +75,9 @@ public class PlayerActivity extends Activity {
         
         isActivityActive = true;
         prefsManager = new PreferencesManager(this);
+        analytics = FirebaseAnalytics.getInstance(this);
+        crashlytics = FirebaseCrashlytics.getInstance();
+        playbackStartTime = System.currentTimeMillis();
         
         if (prefsManager.getKeepScreenOn()) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -108,8 +118,18 @@ public class PlayerActivity extends Activity {
         String channelNumber = getIntent().getStringExtra("channel_number");
         String channelLogo = getIntent().getStringExtra("channel_logo");
         String streamUrl = getIntent().getStringExtra("stream_url");
+        
+        currentChannelName = channelName;
+        currentChannelNumber = channelNumber;
 
         setupChannelHeader(channelName, channelLogo);
+        
+        Bundle params = new Bundle();
+        params.putString(FirebaseAnalytics.Param.SCREEN_NAME, "player_screen");
+        params.putString(FirebaseAnalytics.Param.SCREEN_CLASS, getClass().getSimpleName());
+        params.putString("channel_name", channelName);
+        params.putString("channel_number", channelNumber);
+        analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params);
 
         if (streamUrl.startsWith("teleantillas:")) {
             String videoId = streamUrl.substring(13);
@@ -232,6 +252,14 @@ public class PlayerActivity extends Activity {
                         hideLoading();
                         String userMessage = getUserFriendlyError(error);
                         Toast.makeText(PlayerActivity.this, userMessage, Toast.LENGTH_LONG).show();
+                        
+                        Bundle params = new Bundle();
+                        params.putString("channel_name", currentChannelName);
+                        params.putString("error_type", "stream_load_error");
+                        params.putString("error_message", error);
+                        analytics.logEvent("playback_error", params);
+                        crashlytics.recordException(new Exception("Stream load error: " + error));
+                        
                         finish();
                     }
                 });
@@ -457,6 +485,11 @@ public class PlayerActivity extends Activity {
                 if (isPlaying) {
                     hideLoading();
                     playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                    
+                    Bundle params = new Bundle();
+                    params.putString("channel_name", currentChannelName);
+                    params.putString("channel_number", currentChannelNumber);
+                    analytics.logEvent("playback_started", params);
                 } else {
                     playPauseButton.setImageResource(android.R.drawable.ic_media_play);
                 }
@@ -532,6 +565,14 @@ public class PlayerActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         isActivityActive = false;
+        
+        long watchDuration = (System.currentTimeMillis() - playbackStartTime) / 1000;
+        Bundle params = new Bundle();
+        params.putString("channel_name", currentChannelName);
+        params.putString("channel_number", currentChannelNumber);
+        params.putLong("watch_duration_seconds", watchDuration);
+        analytics.logEvent("playback_ended", params);
+        
         hideControlsHandler.removeCallbacks(hideControlsRunnable);
         loadingHandler.removeCallbacks(loadingRunnable);
         cleanupWebView();

@@ -15,7 +15,6 @@ local.properties
 /app/debug/
 *.keystore
 *.jks
-google-services.json
 /outputs/
 *.hprof
 *.apk

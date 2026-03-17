@@ -25,6 +25,8 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.GridLayoutManager;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,11 +47,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private TextView currentTimeTextView;
     private TextView channelsCountTextView;
+    private TextView recentChannelsCountTextView;
     private Handler timeHandler;
     private Runnable timeRunnable;
     private RecyclerView channelsRecyclerView;
+    private RecyclerView recentChannelsRecyclerView;
+    private LinearLayout recentChannelsSection;
     private ChannelAdapter channelAdapter;
+    private ChannelAdapter recentChannelAdapter;
     private List<Channel> channelList;
+    private List<Channel> recentChannelList;
     private ImageButton settingsButton;
     private ImageButton backButton;
     private LinearLayout contentArea;
@@ -57,6 +64,8 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private LinearLayout settingsDialog;
     private boolean isSettingsVisible = false;
     private PreferencesManager prefsManager;
+    private FirebaseAnalytics analytics;
+    private FirebaseCrashlytics crashlytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +73,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         setContentView(R.layout.activity_main);
         hideSystemUI();
 
+        analytics = FirebaseAnalytics.getInstance(this);
+        crashlytics = FirebaseCrashlytics.getInstance();
+        
         prefsManager = new PreferencesManager(this);
         initializeViews();
         setupFadeInAnimation();
         startTimeUpdater();
         loadChannels();
+        
+        logScreenView("home_screen");
     }
 
     private void hideSystemUI() {
@@ -90,7 +104,10 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private void initializeViews() {
         currentTimeTextView = findViewById(R.id.current_time);
         channelsCountTextView = findViewById(R.id.channels_count);
+        recentChannelsCountTextView = findViewById(R.id.recent_channels_count);
         channelsRecyclerView = findViewById(R.id.channels_recycler_view);
+        recentChannelsRecyclerView = findViewById(R.id.recent_channels_recycler_view);
+        recentChannelsSection = findViewById(R.id.recent_channels_section);
         settingsButton = findViewById(R.id.settings_button);
         backButton = findViewById(R.id.back_button);
         contentArea = findViewById(R.id.content_area);
@@ -98,14 +115,21 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         settingsDialog = findViewById(R.id.settings_dialog);
 
         channelList = new ArrayList<>();
+        recentChannelList = new ArrayList<>();
         channelAdapter = new ChannelAdapter(channelList, this);
+        recentChannelAdapter = new ChannelAdapter(recentChannelList, this);
 
         int savedColumns = prefsManager.getGridColumns();
         GridLayoutManager layoutManager = new GridLayoutManager(this, savedColumns);
         channelsRecyclerView.setLayoutManager(layoutManager);
         channelsRecyclerView.setAdapter(channelAdapter);
 
+        GridLayoutManager recentLayoutManager = new GridLayoutManager(this, savedColumns);
+        recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
+        recentChannelsRecyclerView.setAdapter(recentChannelAdapter);
+
         channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
+        recentChannelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
 
         setupSettingsListeners();
     }
@@ -164,6 +188,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
             channelAdapter.updateChannels(channelList);
             updateChannelsCount();
+            loadRecentChannels();
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -193,14 +218,41 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         channelsCountTextView.setText(countText);
     }
 
+    private void loadRecentChannels() {
+        prefsManager.cleanExpiredRecentChannels();
+        List<Integer> recentIds = prefsManager.getRecentChannelIds();
+        
+        recentChannelList.clear();
+        for (Integer id : recentIds) {
+            for (Channel channel : channelList) {
+                if (channel.getId() == id) {
+                    recentChannelList.add(channel);
+                    break;
+                }
+            }
+        }
+        
+        if (recentChannelList.isEmpty()) {
+            recentChannelsSection.setVisibility(View.GONE);
+        } else {
+            recentChannelsSection.setVisibility(View.VISIBLE);
+            recentChannelAdapter.updateChannels(recentChannelList);
+            updateRecentChannelsCount();
+        }
+    }
+
+    private void updateRecentChannelsCount() {
+        int count = recentChannelList.size();
+        String countText = count + (count == 1 ? " canal" : " canales");
+        recentChannelsCountTextView.setText(countText);
+    }
+
     private void setupSettingsListeners() {
         settingsButton.setOnClickListener(v -> showSettings());
         backButton.setOnClickListener(v -> hideSettings());
-        settingsOverlay.setOnClickListener(v -> {
-            if (v == settingsOverlay) {
-                hideSettings();
-            }
-        });
+        settingsOverlay.setOnClickListener(v -> hideSettings());
+        settingsDialog.setOnClickListener(v -> {});
+        settingsDialog.setClickable(true);
         initializeSettingsControls();
     }
 
@@ -228,6 +280,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                 String[] values = getResources().getStringArray(R.array.controls_timeout_values);
                 int timeout = Integer.parseInt(values[position]);
                 prefsManager.setControlsTimeout(timeout);
+                logEvent("setting_changed", "controls_timeout", String.valueOf(timeout));
             }
 
             @Override
@@ -241,6 +294,9 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                 prefsManager.setGridColumns(columns);
                 GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, columns);
                 channelsRecyclerView.setLayoutManager(layoutManager);
+                GridLayoutManager recentLayoutManager = new GridLayoutManager(MainActivity.this, columns);
+                recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
+                logEvent("setting_changed", "grid_columns", String.valueOf(columns));
             }
 
             @Override
@@ -250,10 +306,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         showChannelNumbersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefsManager.setShowChannelNumbers(isChecked);
             channelAdapter.setShowChannelNumbers(isChecked);
+            recentChannelAdapter.setShowChannelNumbers(isChecked);
+            logEvent("setting_changed", "show_channel_numbers", String.valueOf(isChecked));
         });
 
         keepScreenOnSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefsManager.setKeepScreenOn(isChecked);
+            logEvent("setting_changed", "keep_screen_on", String.valueOf(isChecked));
         });
     }
 
@@ -278,6 +337,15 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private void showSettings() {
         if (!isSettingsVisible) {
             settingsOverlay.setVisibility(View.VISIBLE);
+            settingsOverlay.setFocusable(true);
+            settingsOverlay.setFocusableInTouchMode(true);
+            settingsOverlay.requestFocus();
+            
+            contentArea.setDescendantFocusability(LinearLayout.FOCUS_BLOCK_DESCENDANTS);
+            contentArea.setEnabled(false);
+            settingsButton.setFocusable(false);
+            
+            settingsDialog.setDescendantFocusability(LinearLayout.FOCUS_AFTER_DESCENDANTS);
             
             AlphaAnimation overlayFadeIn = new AlphaAnimation(0.0f, 1.0f);
             overlayFadeIn.setDuration(200);
@@ -289,7 +357,21 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             settingsOverlay.startAnimation(overlayFadeIn);
             settingsDialog.startAnimation(dialogFadeIn);
             
+            dialogFadeIn.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {}
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    backButton.requestFocus();
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {}
+            });
+            
             isSettingsVisible = true;
+            logEvent("settings_opened", null, null);
         }
     }
 
@@ -309,6 +391,12 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                 @Override
                 public void onAnimationEnd(Animation animation) {
                     settingsOverlay.setVisibility(View.GONE);
+                    settingsOverlay.setFocusable(false);
+                    settingsOverlay.setFocusableInTouchMode(false);
+                    contentArea.setDescendantFocusability(LinearLayout.FOCUS_BEFORE_DESCENDANTS);
+                    contentArea.setEnabled(true);
+                    settingsButton.setFocusable(true);
+                    settingsButton.requestFocus();
                 }
 
                 @Override
@@ -333,6 +421,14 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     @Override
     public void onChannelClick(Channel channel) {
+        prefsManager.addRecentChannel(channel.getId());
+        
+        Bundle params = new Bundle();
+        params.putString("channel_id", String.valueOf(channel.getId()));
+        params.putString("channel_name", channel.getName());
+        params.putString("channel_number", channel.getNumber());
+        analytics.logEvent("channel_selected", params);
+        
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("channel_name", channel.getName());
         intent.putExtra("channel_number", channel.getNumber());
@@ -353,5 +449,21 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     protected void onResume() {
         super.onResume();
         hideSystemUI();
+        loadRecentChannels();
+    }
+
+    private void logScreenView(String screenName) {
+        Bundle params = new Bundle();
+        params.putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName);
+        params.putString(FirebaseAnalytics.Param.SCREEN_CLASS, getClass().getSimpleName());
+        analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params);
+    }
+
+    private void logEvent(String eventName, String paramKey, String paramValue) {
+        Bundle params = new Bundle();
+        if (paramKey != null && paramValue != null) {
+            params.putString(paramKey, paramValue);
+        }
+        analytics.logEvent(eventName, params);
     }
 }
