@@ -45,6 +45,15 @@ import io.tubetvlol.tubetv.utils.PreferencesManager;
 @UnstableApi
 public class MainActivity extends Activity implements ChannelAdapter.OnChannelClickListener {
 
+    private static final String TAG = "MainActivity";
+    private static final int FADE_IN_DURATION = 1000;
+    private static final int OVERLAY_FADE_DURATION = 200;
+    private static final int DIALOG_FADE_DURATION = 300;
+    private static final int DIALOG_FADE_DELAY = 100;
+    private static final int OVERLAY_FADE_DELAY = 100;
+    private static final int DIALOG_FADE_OUT_DURATION = 250;
+    private static final long TIME_UPDATE_INTERVAL = 60000;
+
     private TextView currentTimeTextView;
     private TextView channelsCountTextView;
     private TextView recentChannelsCountTextView;
@@ -136,10 +145,12 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private void setupFadeInAnimation() {
         View mainContainer = findViewById(R.id.main_container);
-        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-        fadeIn.setDuration(1000);
-        mainContainer.setAlpha(1.0f);
-        mainContainer.startAnimation(fadeIn);
+        if (mainContainer != null) {
+            AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+            fadeIn.setDuration(FADE_IN_DURATION);
+            mainContainer.setAlpha(1.0f);
+            mainContainer.startAnimation(fadeIn);
+        }
     }
 
     private void startTimeUpdater() {
@@ -148,21 +159,28 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             @Override
             public void run() {
                 updateTime();
-                timeHandler.postDelayed(this, 60000);
+                timeHandler.postDelayed(this, TIME_UPDATE_INTERVAL);
             }
         };
         timeHandler.post(timeRunnable);
     }
 
     private void updateTime() {
-        SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
-        String currentTime = timeFormat.format(new Date());
-        currentTimeTextView.setText(currentTime);
+        if (currentTimeTextView != null) {
+            SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+            String currentTime = timeFormat.format(new Date());
+            currentTimeTextView.setText(currentTime);
+        }
     }
 
     private void loadChannels() {
         try {
             String jsonString = loadJSONFromAsset();
+            if (jsonString == null) {
+                Toast.makeText(this, "Error loading channels", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
             JSONObject jsonObject = new JSONObject(jsonString);
             JSONArray channelsArray = jsonObject.getJSONArray("channels");
 
@@ -170,16 +188,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             for (int i = 0; i < channelsArray.length(); i++) {
                 JSONObject channelObj = channelsArray.getJSONObject(i);
 
-                boolean enabled = channelObj.getBoolean("enabled");
+                boolean enabled = channelObj.optBoolean("enabled", false);
                 if (enabled) {
                     String logo = channelObj.optString("logo", "");
                     Channel channel = new Channel(
-                        channelObj.getInt("id"),
-                        channelObj.getString("name"),
-                        channelObj.getString("number"),
+                        channelObj.optInt("id", 0),
+                        channelObj.optString("name", ""),
+                        channelObj.optString("number", ""),
                         enabled,
-                        channelObj.getString("description"),
-                        channelObj.getString("streamUrl"),
+                        channelObj.optString("description", ""),
+                        channelObj.optString("streamUrl", ""),
                         logo
                     );
                     channelList.add(channel);
@@ -191,7 +209,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             loadRecentChannels();
 
         } catch (JSONException e) {
-            e.printStackTrace();
+            crashlytics.recordException(e);
             Toast.makeText(this, "Error loading channels", Toast.LENGTH_SHORT).show();
         }
     }
@@ -213,12 +231,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void updateChannelsCount() {
-        int count = channelList.size();
-        String countText = count + " canales";
-        channelsCountTextView.setText(countText);
+        if (channelsCountTextView != null) {
+            int count = channelList.size();
+            String countText = count + " canales";
+            channelsCountTextView.setText(countText);
+        }
     }
 
     private void loadRecentChannels() {
+        if (prefsManager == null) return;
+        
         prefsManager.cleanExpiredRecentChannels();
         List<Integer> recentIds = prefsManager.getRecentChannelIds();
         
@@ -232,19 +254,23 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             }
         }
         
-        if (recentChannelList.isEmpty()) {
-            recentChannelsSection.setVisibility(View.GONE);
-        } else {
-            recentChannelsSection.setVisibility(View.VISIBLE);
-            recentChannelAdapter.updateChannels(recentChannelList);
-            updateRecentChannelsCount();
+        if (recentChannelsSection != null) {
+            if (recentChannelList.isEmpty()) {
+                recentChannelsSection.setVisibility(View.GONE);
+            } else {
+                recentChannelsSection.setVisibility(View.VISIBLE);
+                recentChannelAdapter.updateChannels(recentChannelList);
+                updateRecentChannelsCount();
+            }
         }
     }
 
     private void updateRecentChannelsCount() {
-        int count = recentChannelList.size();
-        String countText = count + (count == 1 ? " canal" : " canales");
-        recentChannelsCountTextView.setText(countText);
+        if (recentChannelsCountTextView != null) {
+            int count = recentChannelList.size();
+            String countText = count + (count == 1 ? " canal" : " canales");
+            recentChannelsCountTextView.setText(countText);
+        }
     }
 
     private void setupSettingsListeners() {
@@ -335,24 +361,29 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void showSettings() {
-        if (!isSettingsVisible) {
+        if (!isSettingsVisible && settingsOverlay != null && settingsDialog != null) {
             settingsOverlay.setVisibility(View.VISIBLE);
             settingsOverlay.setFocusable(true);
             settingsOverlay.setFocusableInTouchMode(true);
             settingsOverlay.requestFocus();
             
-            contentArea.setDescendantFocusability(LinearLayout.FOCUS_BLOCK_DESCENDANTS);
-            contentArea.setEnabled(false);
-            settingsButton.setFocusable(false);
+            if (contentArea != null) {
+                contentArea.setDescendantFocusability(LinearLayout.FOCUS_BLOCK_DESCENDANTS);
+                contentArea.setEnabled(false);
+            }
+            
+            if (settingsButton != null) {
+                settingsButton.setFocusable(false);
+            }
             
             settingsDialog.setDescendantFocusability(LinearLayout.FOCUS_AFTER_DESCENDANTS);
             
             AlphaAnimation overlayFadeIn = new AlphaAnimation(0.0f, 1.0f);
-            overlayFadeIn.setDuration(200);
+            overlayFadeIn.setDuration(OVERLAY_FADE_DURATION);
             
             AlphaAnimation dialogFadeIn = new AlphaAnimation(0.0f, 1.0f);
-            dialogFadeIn.setDuration(300);
-            dialogFadeIn.setStartOffset(100);
+            dialogFadeIn.setDuration(DIALOG_FADE_DURATION);
+            dialogFadeIn.setStartOffset(DIALOG_FADE_DELAY);
             
             settingsOverlay.startAnimation(overlayFadeIn);
             settingsDialog.startAnimation(dialogFadeIn);
@@ -363,7 +394,9 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    backButton.requestFocus();
+                    if (backButton != null) {
+                        backButton.requestFocus();
+                    }
                 }
 
                 @Override
@@ -376,13 +409,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void hideSettings() {
-        if (isSettingsVisible) {
+        if (isSettingsVisible && settingsOverlay != null && settingsDialog != null) {
             AlphaAnimation overlayFadeOut = new AlphaAnimation(1.0f, 0.0f);
-            overlayFadeOut.setDuration(200);
-            overlayFadeOut.setStartOffset(100);
+            overlayFadeOut.setDuration(OVERLAY_FADE_DURATION);
+            overlayFadeOut.setStartOffset(OVERLAY_FADE_DELAY);
             
             AlphaAnimation dialogFadeOut = new AlphaAnimation(1.0f, 0.0f);
-            dialogFadeOut.setDuration(250);
+            dialogFadeOut.setDuration(DIALOG_FADE_OUT_DURATION);
             
             overlayFadeOut.setAnimationListener(new Animation.AnimationListener() {
                 @Override
@@ -393,10 +426,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                     settingsOverlay.setVisibility(View.GONE);
                     settingsOverlay.setFocusable(false);
                     settingsOverlay.setFocusableInTouchMode(false);
-                    contentArea.setDescendantFocusability(LinearLayout.FOCUS_BEFORE_DESCENDANTS);
-                    contentArea.setEnabled(true);
-                    settingsButton.setFocusable(true);
-                    settingsButton.requestFocus();
+                    
+                    if (contentArea != null) {
+                        contentArea.setDescendantFocusability(LinearLayout.FOCUS_BEFORE_DESCENDANTS);
+                        contentArea.setEnabled(true);
+                    }
+                    
+                    if (settingsButton != null) {
+                        settingsButton.setFocusable(true);
+                        settingsButton.requestFocus();
+                    }
                 }
 
                 @Override
@@ -421,6 +460,8 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     @Override
     public void onChannelClick(Channel channel) {
+        if (channel == null || prefsManager == null || analytics == null) return;
+        
         prefsManager.addRecentChannel(channel.getId());
         
         Bundle params = new Bundle();
@@ -453,6 +494,8 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void logScreenView(String screenName) {
+        if (analytics == null || screenName == null) return;
+        
         Bundle params = new Bundle();
         params.putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName);
         params.putString(FirebaseAnalytics.Param.SCREEN_CLASS, getClass().getSimpleName());
@@ -460,6 +503,8 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void logEvent(String eventName, String paramKey, String paramValue) {
+        if (analytics == null || eventName == null) return;
+        
         Bundle params = new Bundle();
         if (paramKey != null && paramValue != null) {
             params.putString(paramKey, paramValue);
