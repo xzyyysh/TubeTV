@@ -13,7 +13,9 @@ public class TelemicroExtractor {
     private static final int TIMEOUT_MS = 30000;
     private static final int MAX_RETRIES = 3;
     private static final String MAIN_PAGE_URL = "https://telemicro.com.do/telemicro-en-vivo/";
-    private static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+    public static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+    public static final String REFERER = "https://telemicro.com.do/";
+    public static final String ORIGIN = "https://telemicro.com.do";
 
     public static String extractStreamUrl(String mainPageUrl) {
         for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {

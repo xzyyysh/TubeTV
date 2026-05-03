@@ -55,7 +55,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:scaleType="fitCenter"
-            android:contentDescription="Channel Logo" />
+            android:contentDescription="@string/channel_logo_description" />
 
     </LinearLayout>
 

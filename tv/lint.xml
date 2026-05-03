@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Channel logos are loaded dynamically from channels.json -->
+    <issue id="UnusedResources">
+        <ignore path="src/main/res/drawable/antena21rd.png" />
+        <ignore path="src/main/res/drawable/antenalatina7rd.png" />
+        <ignore path="src/main/res/drawable/cdn37rd.png" />
+        <ignore path="src/main/res/drawable/digitalquincerd.png" />
+        <ignore path="src/main/res/drawable/rtvd4rd.png" />
+        <ignore path="src/main/res/drawable/teleantillas10rd.png" />
+        <ignore path="src/main/res/drawable/telecentrord.png" />
+        <ignore path="src/main/res/drawable/telemicrord.png" />
+        <ignore path="src/main/res/drawable/telesistema11rd.png" />
+        <ignore path="src/main/res/mipmap-hdpi/ic_launcher_round.webp" />
+    </issue>
+    
+    <!-- Channel logos in densityless folder is intentional for TV app -->
+    <issue id="IconLocation">
+        <ignore path="src/main/res/drawable/antena21rd.png" />
+        <ignore path="src/main/res/drawable/antenalatina7rd.png" />
+        <ignore path="src/main/res/drawable/cdn37rd.png" />
+        <ignore path="src/main/res/drawable/digitalquincerd.png" />
+        <ignore path="src/main/res/drawable/rtvd4rd.png" />
+        <ignore path="src/main/res/drawable/teleantillas10rd.png" />
+        <ignore path="src/main/res/drawable/telecentrord.png" />
+        <ignore path="src/main/res/drawable/telemicrord.png" />
+        <ignore path="src/main/res/drawable/telesistema11rd.png" />
+        <ignore path="src/main/res/drawable/tubetv_logo.png" />
+    </issue>
+    
+    <!-- Landscape orientation is required for TV app -->
+    <issue id="DiscouragedApi" severity="ignore" />
+    
+    <!-- NotifyDataSetChanged is acceptable for simple channel list updates -->
+    <issue id="NotifyDataSetChanged" severity="ignore" />
+    
+    <!-- Overdraw warnings are false positives - backgrounds are intentional -->
+    <issue id="Overdraw" severity="ignore" />
+</lint>

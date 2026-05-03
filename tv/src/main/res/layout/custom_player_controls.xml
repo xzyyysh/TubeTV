@@ -7,26 +7,18 @@
     android:background="#80000000"
     android:visibility="gone">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageButton
+        android:id="@+id/play_pause_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="center"
-        android:orientation="vertical"
-        android:gravity="center">
-
-        <ImageButton
-            android:id="@+id/play_pause_button"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:src="@android:drawable/ic_media_pause"
-            android:scaleType="fitCenter"
-            app:tint="@android:color/white"
-            android:contentDescription="@string/play_pause"
-            android:focusable="true"
-            android:focusableInTouchMode="false"
-            android:clickable="true" />
-
-    </LinearLayout>
+        android:background="?android:attr/selectableItemBackground"
+        android:src="@android:drawable/ic_media_pause"
+        android:scaleType="fitCenter"
+        app:tint="@android:color/white"
+        android:contentDescription="@string/play_pause"
+        android:focusable="true"
+        android:focusableInTouchMode="false"
+        android:clickable="true" />
 
 </FrameLayout>

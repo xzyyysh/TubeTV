@@ -9,20 +9,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.widget.AdapterView;
-import android.widget.Switch;
-import android.widget.FrameLayout;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowInsets;
 import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
-import android.view.animation.AnimationSet;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.AccelerateInterpolator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -47,11 +37,6 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private static final String TAG = "MainActivity";
     private static final int FADE_IN_DURATION = 1000;
-    private static final int OVERLAY_FADE_DURATION = 200;
-    private static final int DIALOG_FADE_DURATION = 300;
-    private static final int DIALOG_FADE_DELAY = 100;
-    private static final int OVERLAY_FADE_DELAY = 100;
-    private static final int DIALOG_FADE_OUT_DURATION = 250;
     private static final long TIME_UPDATE_INTERVAL = 60000;
 
     private TextView currentTimeTextView;
@@ -67,11 +52,6 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private List<Channel> channelList;
     private List<Channel> recentChannelList;
     private ImageButton settingsButton;
-    private ImageButton backButton;
-    private LinearLayout contentArea;
-    private FrameLayout settingsOverlay;
-    private LinearLayout settingsDialog;
-    private boolean isSettingsVisible = false;
     private PreferencesManager prefsManager;
     private FirebaseAnalytics analytics;
     private FirebaseCrashlytics crashlytics;
@@ -118,10 +98,6 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         recentChannelsRecyclerView = findViewById(R.id.recent_channels_recycler_view);
         recentChannelsSection = findViewById(R.id.recent_channels_section);
         settingsButton = findViewById(R.id.settings_button);
-        backButton = findViewById(R.id.back_button);
-        contentArea = findViewById(R.id.content_area);
-        settingsOverlay = findViewById(R.id.settings_overlay);
-        settingsDialog = findViewById(R.id.settings_dialog);
 
         channelList = new ArrayList<>();
         recentChannelList = new ArrayList<>();
@@ -274,188 +250,10 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void setupSettingsListeners() {
-        settingsButton.setOnClickListener(v -> showSettings());
-        backButton.setOnClickListener(v -> hideSettings());
-        settingsOverlay.setOnClickListener(v -> hideSettings());
-        settingsDialog.setOnClickListener(v -> {});
-        settingsDialog.setClickable(true);
-        initializeSettingsControls();
-    }
-
-    private void initializeSettingsControls() {
-        Spinner controlsTimeoutSpinner = findViewById(R.id.controls_timeout_spinner);
-        Spinner gridColumnsSpinner = findViewById(R.id.grid_columns_spinner);
-        Switch showChannelNumbersSwitch = findViewById(R.id.show_channel_numbers_switch);
-        Switch keepScreenOnSwitch = findViewById(R.id.keep_screen_on_switch);
-
-        ArrayAdapter<CharSequence> timeoutAdapter = ArrayAdapter.createFromResource(this,
-                R.array.controls_timeout_options, android.R.layout.simple_spinner_item);
-        timeoutAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        controlsTimeoutSpinner.setAdapter(timeoutAdapter);
-
-        ArrayAdapter<CharSequence> columnsAdapter = ArrayAdapter.createFromResource(this,
-                R.array.grid_columns_options, android.R.layout.simple_spinner_item);
-        columnsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        gridColumnsSpinner.setAdapter(columnsAdapter);
-
-        loadSettingsValues(controlsTimeoutSpinner, gridColumnsSpinner, showChannelNumbersSwitch, keepScreenOnSwitch);
-
-        controlsTimeoutSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String[] values = getResources().getStringArray(R.array.controls_timeout_values);
-                int timeout = Integer.parseInt(values[position]);
-                prefsManager.setControlsTimeout(timeout);
-                logEvent("setting_changed", "controls_timeout", String.valueOf(timeout));
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
         });
-
-        gridColumnsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                int columns = position + 2;
-                prefsManager.setGridColumns(columns);
-                GridLayoutManager layoutManager = new GridLayoutManager(MainActivity.this, columns);
-                channelsRecyclerView.setLayoutManager(layoutManager);
-                GridLayoutManager recentLayoutManager = new GridLayoutManager(MainActivity.this, columns);
-                recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
-                logEvent("setting_changed", "grid_columns", String.valueOf(columns));
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        showChannelNumbersSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefsManager.setShowChannelNumbers(isChecked);
-            channelAdapter.setShowChannelNumbers(isChecked);
-            recentChannelAdapter.setShowChannelNumbers(isChecked);
-            logEvent("setting_changed", "show_channel_numbers", String.valueOf(isChecked));
-        });
-
-        keepScreenOnSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefsManager.setKeepScreenOn(isChecked);
-            logEvent("setting_changed", "keep_screen_on", String.valueOf(isChecked));
-        });
-    }
-
-    private void loadSettingsValues(Spinner timeoutSpinner, Spinner columnsSpinner, 
-                                   Switch numbersSwitch, Switch screenSwitch) {
-        int savedTimeout = prefsManager.getControlsTimeout();
-        String[] timeoutValues = getResources().getStringArray(R.array.controls_timeout_values);
-        for (int i = 0; i < timeoutValues.length; i++) {
-            if (Integer.parseInt(timeoutValues[i]) == savedTimeout) {
-                timeoutSpinner.setSelection(i);
-                break;
-            }
-        }
-
-        int savedColumns = prefsManager.getGridColumns();
-        columnsSpinner.setSelection(savedColumns - 2);
-
-        numbersSwitch.setChecked(prefsManager.getShowChannelNumbers());
-        screenSwitch.setChecked(prefsManager.getKeepScreenOn());
-    }
-
-    private void showSettings() {
-        if (!isSettingsVisible && settingsOverlay != null && settingsDialog != null) {
-            settingsOverlay.setVisibility(View.VISIBLE);
-            settingsOverlay.setFocusable(true);
-            settingsOverlay.setFocusableInTouchMode(true);
-            settingsOverlay.requestFocus();
-            
-            if (contentArea != null) {
-                contentArea.setDescendantFocusability(LinearLayout.FOCUS_BLOCK_DESCENDANTS);
-                contentArea.setEnabled(false);
-            }
-            
-            if (settingsButton != null) {
-                settingsButton.setFocusable(false);
-            }
-            
-            settingsDialog.setDescendantFocusability(LinearLayout.FOCUS_AFTER_DESCENDANTS);
-            
-            AlphaAnimation overlayFadeIn = new AlphaAnimation(0.0f, 1.0f);
-            overlayFadeIn.setDuration(OVERLAY_FADE_DURATION);
-            
-            AlphaAnimation dialogFadeIn = new AlphaAnimation(0.0f, 1.0f);
-            dialogFadeIn.setDuration(DIALOG_FADE_DURATION);
-            dialogFadeIn.setStartOffset(DIALOG_FADE_DELAY);
-            
-            settingsOverlay.startAnimation(overlayFadeIn);
-            settingsDialog.startAnimation(dialogFadeIn);
-            
-            dialogFadeIn.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {}
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    if (backButton != null) {
-                        backButton.requestFocus();
-                    }
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {}
-            });
-            
-            isSettingsVisible = true;
-            logEvent("settings_opened", null, null);
-        }
-    }
-
-    private void hideSettings() {
-        if (isSettingsVisible && settingsOverlay != null && settingsDialog != null) {
-            AlphaAnimation overlayFadeOut = new AlphaAnimation(1.0f, 0.0f);
-            overlayFadeOut.setDuration(OVERLAY_FADE_DURATION);
-            overlayFadeOut.setStartOffset(OVERLAY_FADE_DELAY);
-            
-            AlphaAnimation dialogFadeOut = new AlphaAnimation(1.0f, 0.0f);
-            dialogFadeOut.setDuration(DIALOG_FADE_OUT_DURATION);
-            
-            overlayFadeOut.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {}
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    settingsOverlay.setVisibility(View.GONE);
-                    settingsOverlay.setFocusable(false);
-                    settingsOverlay.setFocusableInTouchMode(false);
-                    
-                    if (contentArea != null) {
-                        contentArea.setDescendantFocusability(LinearLayout.FOCUS_BEFORE_DESCENDANTS);
-                        contentArea.setEnabled(true);
-                    }
-                    
-                    if (settingsButton != null) {
-                        settingsButton.setFocusable(true);
-                        settingsButton.requestFocus();
-                    }
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {}
-            });
-            
-            settingsOverlay.startAnimation(overlayFadeOut);
-            settingsDialog.startAnimation(dialogFadeOut);
-            
-            isSettingsVisible = false;
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isSettingsVisible) {
-            hideSettings();
-        } else {
-            super.onBackPressed();
-        }
     }
 
     @Override
@@ -491,6 +289,16 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         super.onResume();
         hideSystemUI();
         loadRecentChannels();
+        
+        // reload settings in case they changed
+        int savedColumns = prefsManager.getGridColumns();
+        GridLayoutManager layoutManager = new GridLayoutManager(this, savedColumns);
+        channelsRecyclerView.setLayoutManager(layoutManager);
+        GridLayoutManager recentLayoutManager = new GridLayoutManager(this, savedColumns);
+        recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
+        
+        channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
+        recentChannelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
     }
 
     private void logScreenView(String screenName) {

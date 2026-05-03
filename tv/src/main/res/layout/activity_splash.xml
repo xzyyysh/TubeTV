@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
+
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerInParent="true"
+        android:src="@drawable/tubetv_logo"
+        android:contentDescription="@string/app_name"
+        android:scaleX="0"
+        android:scaleY="0"
+        android:alpha="0" />
+
+    <TextView
+        android:id="@+id/loading_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:text="Loading..."
+        android:textSize="18sp"
+        android:textColor="?android:attr/textColorPrimary"
+        android:fontFamily="@font/ubuntu"
+        android:alpha="0" />
+
+    <TextView
+        android:id="@+id/error_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/loading_text"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="48dp"
+        android:textSize="14sp"
+        android:textColor="#FF5252"
+        android:fontFamily="@font/ubuntu"
+        android:gravity="center"
+        android:visibility="gone" />
+
+</RelativeLayout>

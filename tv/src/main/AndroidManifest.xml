@@ -21,10 +21,10 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".activities.MainActivity"
-            android:launchMode="singleTop"
+            android:name=".activities.SplashActivity"
             android:screenOrientation="landscape"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -36,10 +36,22 @@
         </activity>
 
         <activity
+            android:name=".activities.MainActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            android:exported="false" />
+
+        <activity
             android:name=".activities.PlayerActivity"
             android:screenOrientation="landscape"
             android:exported="false"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:screenOrientation="landscape"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
 
     </application>
 

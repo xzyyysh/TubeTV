@@ -4,11 +4,11 @@
     <string name="recent_channels_title">Canales Recientes</string>
     <string name="play_pause">Play/Pause</string>
     <string name="live_text">EN VIVO</string>
-    <string name="loading_text">...</string>
-    <string name="channel_separator"> - </string>
+    <string name="loading_text">…</string>
     <string name="app_logo_description">TubeTV Logo</string>
     <string name="channel_logo_description">Channel Logo</string>
     <string name="settings_title">Configuración</string>
+    <string name="settings_description">Settings</string>
     <string name="back_button">Atrás</string>
     <string name="player_settings">Configuración del Reproductor</string>
     <string name="display_settings">Configuración de Pantalla</string>

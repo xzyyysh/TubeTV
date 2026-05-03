@@ -3,6 +3,9 @@ package io.tubetvlol.tubetv.activities;
 import androidx.media3.common.util.UnstableApi;
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Build;
+import android.window.OnBackInvokedDispatcher;
+import android.window.OnBackInvokedCallback;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -82,6 +85,18 @@ public class PlayerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                new OnBackInvokedCallback() {
+                    @Override
+                    public void onBackInvoked() {
+                        finish();
+                    }
+                }
+            );
+        }
         
         isActivityActive = true;
         prefsManager = new PreferencesManager(this);
@@ -572,9 +587,9 @@ public class PlayerActivity extends Activity {
 
         if (isTelemicroStream) {
             Map<String, String> headers = new HashMap<>();
-            headers.put("Referer", "https://telemicro.com.do/");
-            headers.put("Origin", "https://telemicro.com.do");
-            headers.put("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36");
+            headers.put("Referer", TelemicroExtractor.REFERER);
+            headers.put("Origin", TelemicroExtractor.ORIGIN);
+            headers.put("User-Agent", TelemicroExtractor.USER_AGENT);
 
             DefaultHttpDataSource.Factory dataSourceFactory = new DefaultHttpDataSource.Factory();
             dataSourceFactory.setDefaultRequestProperties(headers);
@@ -595,8 +610,9 @@ public class PlayerActivity extends Activity {
     }
 
     @Override
+    @android.annotation.SuppressLint("GestureBackNavigation")
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && keyCode == KeyEvent.KEYCODE_BACK) {
             finish();
             return true;
         }
