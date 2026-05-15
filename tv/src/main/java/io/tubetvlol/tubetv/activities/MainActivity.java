@@ -5,14 +5,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowInsets;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import com.google.firebase.analytics.FirebaseAnalytics;
@@ -37,24 +38,30 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private static final String TAG = "MainActivity";
     private static final int FADE_IN_DURATION = 1000;
+    private static final int PAGE_FADE_DURATION = 200;
     private static final long TIME_UPDATE_INTERVAL = 60000;
 
     private TextView currentTimeTextView;
     private TextView channelsCountTextView;
     private TextView recentChannelsCountTextView;
+    private TextView recentsEmptyText;
     private Handler timeHandler;
     private Runnable timeRunnable;
     private RecyclerView channelsRecyclerView;
     private RecyclerView recentChannelsRecyclerView;
-    private LinearLayout recentChannelsSection;
+    private NestedScrollView pageHome;
+    private NestedScrollView pageRecents;
+    private ImageButton sidebarHome;
+    private ImageButton sidebarRecents;
+    private ImageButton settingsButton;
     private ChannelAdapter channelAdapter;
     private ChannelAdapter recentChannelAdapter;
     private List<Channel> channelList;
     private List<Channel> recentChannelList;
-    private ImageButton settingsButton;
     private PreferencesManager prefsManager;
     private FirebaseAnalytics analytics;
     private FirebaseCrashlytics crashlytics;
+    private boolean onHomePage = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,13 +71,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
         analytics = FirebaseAnalytics.getInstance(this);
         crashlytics = FirebaseCrashlytics.getInstance();
-        
+
         prefsManager = new PreferencesManager(this);
         initializeViews();
         setupFadeInAnimation();
         startTimeUpdater();
         loadChannels();
-        
+
         logScreenView("home_screen");
     }
 
@@ -94,9 +101,13 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         currentTimeTextView = findViewById(R.id.current_time);
         channelsCountTextView = findViewById(R.id.channels_count);
         recentChannelsCountTextView = findViewById(R.id.recent_channels_count);
+        recentsEmptyText = findViewById(R.id.recents_empty_text);
         channelsRecyclerView = findViewById(R.id.channels_recycler_view);
         recentChannelsRecyclerView = findViewById(R.id.recent_channels_recycler_view);
-        recentChannelsSection = findViewById(R.id.recent_channels_section);
+        pageHome = findViewById(R.id.page_home);
+        pageRecents = findViewById(R.id.page_recents);
+        sidebarHome = findViewById(R.id.sidebar_home);
+        sidebarRecents = findViewById(R.id.sidebar_recents);
         settingsButton = findViewById(R.id.settings_button);
 
         channelList = new ArrayList<>();
@@ -105,18 +116,59 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         recentChannelAdapter = new ChannelAdapter(recentChannelList, this);
 
         int savedColumns = prefsManager.getGridColumns();
-        GridLayoutManager layoutManager = new GridLayoutManager(this, savedColumns);
-        channelsRecyclerView.setLayoutManager(layoutManager);
+        channelsRecyclerView.setLayoutManager(new GridLayoutManager(this, savedColumns));
         channelsRecyclerView.setAdapter(channelAdapter);
 
-        GridLayoutManager recentLayoutManager = new GridLayoutManager(this, savedColumns);
-        recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
+        recentChannelsRecyclerView.setLayoutManager(new GridLayoutManager(this, savedColumns));
         recentChannelsRecyclerView.setAdapter(recentChannelAdapter);
 
         channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
         recentChannelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
 
-        setupSettingsListeners();
+        sidebarHome.setOnClickListener(v -> navigateToPage(true));
+        sidebarRecents.setOnClickListener(v -> navigateToPage(false));
+
+        settingsButton.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
+    }
+
+    private void navigateToPage(boolean goHome) {
+        if (onHomePage == goHome) return;
+
+        final View pageOut = goHome ? pageRecents : pageHome;
+        final View pageIn = goHome ? pageHome : pageRecents;
+
+        AlphaAnimation fadeOut = new AlphaAnimation(1f, 0f);
+        fadeOut.setDuration(PAGE_FADE_DURATION);
+        fadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                pageOut.setVisibility(View.GONE);
+                pageIn.setAlpha(0f);
+                pageIn.setVisibility(View.VISIBLE);
+                AlphaAnimation fadeIn = new AlphaAnimation(0f, 1f);
+                fadeIn.setDuration(PAGE_FADE_DURATION);
+                pageIn.startAnimation(fadeIn);
+                pageIn.setAlpha(1f);
+            }
+            @Override public void onAnimationStart(Animation animation) {}
+            @Override public void onAnimationRepeat(Animation animation) {}
+        });
+        pageOut.startAnimation(fadeOut);
+
+        onHomePage = goHome;
+        sidebarHome.setBackground(goHome
+                ? getDrawable(R.drawable.sidebar_item_selected)
+                : null);
+        sidebarRecents.setBackground(goHome
+                ? null
+                : getDrawable(R.drawable.sidebar_item_selected));
+
+        if (!goHome) {
+            loadRecentChannels();
+            logScreenView("recents_screen");
+        } else {
+            logScreenView("home_screen");
+        }
     }
 
     private void setupFadeInAnimation() {
@@ -144,8 +196,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private void updateTime() {
         if (currentTimeTextView != null) {
             SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
-            String currentTime = timeFormat.format(new Date());
-            currentTimeTextView.setText(currentTime);
+            currentTimeTextView.setText(timeFormat.format(new Date()));
         }
     }
 
@@ -156,33 +207,29 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                 Toast.makeText(this, "Error loading channels", Toast.LENGTH_SHORT).show();
                 return;
             }
-            
+
             JSONObject jsonObject = new JSONObject(jsonString);
             JSONArray channelsArray = jsonObject.getJSONArray("channels");
 
             channelList.clear();
             for (int i = 0; i < channelsArray.length(); i++) {
                 JSONObject channelObj = channelsArray.getJSONObject(i);
-
                 boolean enabled = channelObj.optBoolean("enabled", false);
                 if (enabled) {
-                    String logo = channelObj.optString("logo", "");
-                    Channel channel = new Channel(
+                    channelList.add(new Channel(
                         channelObj.optInt("id", 0),
                         channelObj.optString("name", ""),
                         channelObj.optString("number", ""),
                         enabled,
                         channelObj.optString("description", ""),
                         channelObj.optString("streamUrl", ""),
-                        logo
-                    );
-                    channelList.add(channel);
+                        channelObj.optString("logo", "")
+                    ));
                 }
             }
 
             channelAdapter.updateChannels(channelList);
             updateChannelsCount();
-            loadRecentChannels();
 
         } catch (JSONException e) {
             crashlytics.recordException(e);
@@ -191,35 +238,30 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private String loadJSONFromAsset() {
-        String json = null;
         try {
             InputStream is = getAssets().open("channels.json");
-            int size = is.available();
-            byte[] buffer = new byte[size];
+            byte[] buffer = new byte[is.available()];
             is.read(buffer);
             is.close();
-            json = new String(buffer, "UTF-8");
+            return new String(buffer, "UTF-8");
         } catch (IOException ex) {
             ex.printStackTrace();
             return null;
         }
-        return json;
     }
 
     private void updateChannelsCount() {
         if (channelsCountTextView != null) {
-            int count = channelList.size();
-            String countText = count + " canales";
-            channelsCountTextView.setText(countText);
+            channelsCountTextView.setText(channelList.size() + " canales");
         }
     }
 
     private void loadRecentChannels() {
         if (prefsManager == null) return;
-        
+
         prefsManager.cleanExpiredRecentChannels();
         List<Integer> recentIds = prefsManager.getRecentChannelIds();
-        
+
         recentChannelList.clear();
         for (Integer id : recentIds) {
             for (Channel channel : channelList) {
@@ -229,51 +271,56 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
                 }
             }
         }
-        
-        if (recentChannelsSection != null) {
-            if (recentChannelList.isEmpty()) {
-                recentChannelsSection.setVisibility(View.GONE);
-            } else {
-                recentChannelsSection.setVisibility(View.VISIBLE);
-                recentChannelAdapter.updateChannels(recentChannelList);
-                updateRecentChannelsCount();
+
+        recentChannelAdapter.updateChannels(recentChannelList);
+
+        if (recentChannelList.isEmpty()) {
+            recentChannelsRecyclerView.setVisibility(View.GONE);
+            recentsEmptyText.setVisibility(View.VISIBLE);
+            if (recentChannelsCountTextView != null) recentChannelsCountTextView.setText("");
+        } else {
+            recentChannelsRecyclerView.setVisibility(View.VISIBLE);
+            recentsEmptyText.setVisibility(View.GONE);
+            if (recentChannelsCountTextView != null) {
+                int count = recentChannelList.size();
+                recentChannelsCountTextView.setText(count + (count == 1 ? " canal" : " canales"));
             }
         }
-    }
-
-    private void updateRecentChannelsCount() {
-        if (recentChannelsCountTextView != null) {
-            int count = recentChannelList.size();
-            String countText = count + (count == 1 ? " canal" : " canales");
-            recentChannelsCountTextView.setText(countText);
-        }
-    }
-
-    private void setupSettingsListeners() {
-        settingsButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-            startActivity(intent);
-        });
     }
 
     @Override
     public void onChannelClick(Channel channel) {
         if (channel == null || prefsManager == null || analytics == null) return;
-        
+
         prefsManager.addRecentChannel(channel.getId());
-        
+
         Bundle params = new Bundle();
         params.putString("channel_id", String.valueOf(channel.getId()));
         params.putString("channel_name", channel.getName());
         params.putString("channel_number", channel.getNumber());
         analytics.logEvent("channel_selected", params);
-        
+
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("channel_name", channel.getName());
         intent.putExtra("channel_number", channel.getNumber());
         intent.putExtra("channel_logo", channel.getLogo());
         intent.putExtra("stream_url", channel.getStreamUrl());
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        hideSystemUI();
+
+        int savedColumns = prefsManager.getGridColumns();
+        channelsRecyclerView.setLayoutManager(new GridLayoutManager(this, savedColumns));
+        recentChannelsRecyclerView.setLayoutManager(new GridLayoutManager(this, savedColumns));
+
+        channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
+        recentChannelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
+
+        if (!onHomePage) loadRecentChannels();
     }
 
     @Override
@@ -284,39 +331,11 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        hideSystemUI();
-        loadRecentChannels();
-        
-        // reload settings in case they changed
-        int savedColumns = prefsManager.getGridColumns();
-        GridLayoutManager layoutManager = new GridLayoutManager(this, savedColumns);
-        channelsRecyclerView.setLayoutManager(layoutManager);
-        GridLayoutManager recentLayoutManager = new GridLayoutManager(this, savedColumns);
-        recentChannelsRecyclerView.setLayoutManager(recentLayoutManager);
-        
-        channelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
-        recentChannelAdapter.setShowChannelNumbers(prefsManager.getShowChannelNumbers());
-    }
-
     private void logScreenView(String screenName) {
         if (analytics == null || screenName == null) return;
-        
         Bundle params = new Bundle();
         params.putString(FirebaseAnalytics.Param.SCREEN_NAME, screenName);
         params.putString(FirebaseAnalytics.Param.SCREEN_CLASS, getClass().getSimpleName());
         analytics.logEvent(FirebaseAnalytics.Event.SCREEN_VIEW, params);
-    }
-
-    private void logEvent(String eventName, String paramKey, String paramValue) {
-        if (analytics == null || eventName == null) return;
-        
-        Bundle params = new Bundle();
-        if (paramKey != null && paramValue != null) {
-            params.putString(paramKey, paramValue);
-        }
-        analytics.logEvent(eventName, params);
     }
 }

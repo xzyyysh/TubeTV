@@ -10,7 +10,7 @@
     <LinearLayout
         android:id="@+id/navbar"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="56dp"
         android:orientation="horizontal"
         android:background="#1E1E1E"
         android:paddingStart="24dp"
@@ -29,8 +29,8 @@
 
             <ImageView
                 android:id="@+id/app_logo"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/circular_logo"
                 android:scaleType="fitCenter"
                 android:layout_marginEnd="12dp"
@@ -41,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/app_name"
-                android:textSize="24sp"
+                android:textSize="20sp"
                 android:textColor="#FFFFFF"
                 android:fontFamily="@font/ubuntu_medium" />
 
@@ -49,11 +49,11 @@
 
         <ImageButton
             android:id="@+id/settings_button"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginEnd="16dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_preferences"
+            android:src="@android:drawable/ic_menu_manage"
             android:scaleType="fitCenter"
             android:contentDescription="@string/settings_description"
             android:focusable="true"
@@ -65,36 +65,134 @@
             android:id="@+id/current_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/ubuntu" />
 
     </LinearLayout>
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/content_scroll"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/sidebar"
+        android:layout_width="56dp"
         android:layout_height="0dp"
-        android:fillViewport="true"
+        android:orientation="vertical"
+        android:background="#1E1E1E"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:gravity="top|center_horizontal"
         app:layout_constraintTop_toBottomOf="@id/navbar"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/sidebar_home"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/sidebar_item_selected"
+            android:src="@android:drawable/ic_menu_gallery"
+            android:scaleType="fitCenter"
+            android:padding="8dp"
+            android:contentDescription="Home"
+            android:focusable="true"
+            android:clickable="true"
+            app:tint="#FFFFFF" />
+
+        <ImageButton
+            android:id="@+id/sidebar_recents"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_recent_history"
+            android:scaleType="fitCenter"
+            android:padding="8dp"
+            android:contentDescription="Recents"
+            android:focusable="true"
+            android:clickable="true"
+            app:tint="#FFFFFF" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/navbar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/sidebar"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
-            android:id="@+id/content_area"
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/page_home"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="?android:attr/colorBackground"
-            android:padding="20dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
-                android:id="@+id/recent_channels_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:visibility="gone">
+                android:background="?android:attr/colorBackground"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/channels_title"
+                        android:textSize="22sp"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:fontFamily="@font/ubuntu_medium" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginEnd="16dp"
+                        android:background="#40FFFFFF" />
+
+                    <TextView
+                        android:id="@+id/channels_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="18sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:fontFamily="@font/ubuntu" />
+
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/channels_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:nestedScrollingEnabled="true"
+                    android:scrollbars="vertical" />
+
+            </LinearLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/page_recents"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="?android:attr/colorBackground"
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -135,53 +233,24 @@
                     android:layout_height="wrap_content"
                     android:clipToPadding="false"
                     android:nestedScrollingEnabled="true"
-                    android:layout_marginBottom="24dp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="16dp">
+                    android:visibility="gone" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/recents_empty_text"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/channels_title"
-                    android:textSize="22sp"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:fontFamily="@font/ubuntu_medium" />
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginEnd="16dp"
-                    android:background="#40FFFFFF" />
-
-                <TextView
-                    android:id="@+id/channels_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="18sp"
+                    android:text="No canales recientes vistos aun."
+                    android:textSize="16sp"
                     android:textColor="?android:attr/textColorSecondary"
-                    android:fontFamily="@font/ubuntu" />
+                    android:fontFamily="@font/ubuntu"
+                    android:gravity="center"
+                    android:paddingTop="48dp"
+                    android:visibility="gone" />
 
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/channels_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:nestedScrollingEnabled="true"
-                android:scrollbars="vertical" />
+        </androidx.core.widget.NestedScrollView>
 
-        </LinearLayout>
-
-    </androidx.core.widget.NestedScrollView>
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
