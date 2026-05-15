@@ -21,3 +21,4 @@ local.properties
 *.aab
 lint-results*.xml
 /reports/
+google-services.json
