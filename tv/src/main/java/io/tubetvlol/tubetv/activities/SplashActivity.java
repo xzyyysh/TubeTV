@@ -90,7 +90,7 @@ public class SplashActivity extends Activity {
     private void startConnectivityChecks() {
         mainHandler.postDelayed(() -> {
             loadingText.setAlpha(1f);
-            checkNextService(0);
+            showNoInternetError();
         }, 1000);
     }
 
