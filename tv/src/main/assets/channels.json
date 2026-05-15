@@ -69,7 +69,7 @@
       "number": "4",
       "enabled": true,
       "description": "Canal 4 - RTVD",
-      "streamUrl": "rtvd:",
+      "streamUrl": "rtvd:https://rtvd.gob.do/",
       "logo": "rtvd4rd"
     },
     {
@@ -80,6 +80,78 @@
       "description": "Canal 37 - CDN El Canal de Noticias",
       "streamUrl": "cdn:",
       "logo": "cdn37rd"
+    },
+    {
+      "id": 10,
+      "name": "RTVD 17",
+      "number": "17",
+      "enabled": true,
+      "description": "Canal 17 - RTVD 17",
+      "streamUrl": "rtvd:https://rtvdclic.com/rtvd-17-en-vivo/",
+      "logo": "rtvd17rd"
+    },
+    {
+      "id": 11,
+      "name": "Canal del Sol",
+      "number": "26",
+      "enabled": true,
+      "description": "Canal 26 - Canal del Sol",
+      "streamUrl": "htmlstream:https://canaldelsol.com/en-vivo",
+      "logo": "canaldelsol26rd"
+    },
+    {
+      "id": 12,
+      "name": "Punta Cana TV",
+      "number": "46",
+      "enabled": true,
+      "description": "Canal 46 - Punta Cana TV",
+      "streamUrl": "puntacana:",
+      "logo": "puntacanatvrd"
+    },
+    {
+      "id": 13,
+      "name": "Color Vision",
+      "number": "9",
+      "enabled": true,
+      "description": "Canal 9 - Color Vision",
+      "streamUrl": "colorvision:",
+      "logo": "colorvision9rd"
+    },
+    {
+      "id": 14,
+      "name": "Cinevision",
+      "number": "19",
+      "enabled": true,
+      "description": "Canal 19 - Cinevision",
+      "streamUrl": "cinevision:",
+      "logo": "cinevision19rd"
+    },
+    {
+      "id": 15,
+      "name": "TeleUniverso",
+      "number": "29",
+      "enabled": true,
+      "description": "Canal 29 - TeleUniverso",
+      "streamUrl": "teleuniverso:",
+      "logo": "teleuniverso29rd"
+    },
+    {
+      "id": 16,
+      "name": "RNN",
+      "number": "27",
+      "enabled": true,
+      "description": "Canal 27 - Red Nacional de Noticias",
+      "streamUrl": "rnn:",
+      "logo": "rnn27rd"
+    },
+    {
+      "id": 17,
+      "name": "VTV Canal 32",
+      "number": "32",
+      "enabled": true,
+      "description": "Canal 32 - VTV",
+      "streamUrl": "vtv:",
+      "logo": "vtv32rd"
     }
   ]
 }

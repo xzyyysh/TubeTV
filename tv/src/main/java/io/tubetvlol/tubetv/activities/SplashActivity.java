@@ -29,20 +29,12 @@ public class SplashActivity extends Activity {
 
     private final String[] checkUrls = {
         "https://telemicro.com.do",
-        "https://teleantillas.com.do",
+        "https://geo.dailymotion.com",
         "https://www.antena7.com.do",
-        "https://telesistema11.com.do",
         "https://rtvd.gob.do",
-        "https://geo.dailymotion.com"
-    };
-
-    private final String[] checkNames = {
-        "Telemicro",
-        "Teleantillas",
-        "Antena Latina",
-        "Telesistema",
-        "RTVD",
-        "CDN"
+        "https://rtvdclic.com",
+        "https://canaldelsol.com",
+        "https://fox.hostlagarto.com"
     };
 
     @Override
@@ -90,29 +82,23 @@ public class SplashActivity extends Activity {
     private void startConnectivityChecks() {
         mainHandler.postDelayed(() -> {
             loadingText.setAlpha(1f);
-            checkNextService(0);
+            updateLoadingText("Checking connection...");
+            executor.execute(() -> {
+                for (String url : checkUrls) {
+                    if (checkConnectivity(url)) {
+                        hasInternet = true;
+                        break;
+                    }
+                }
+                mainHandler.post(() -> {
+                    if (hasInternet) {
+                        showOpeningMessage();
+                    } else {
+                        showNoInternetError();
+                    }
+                });
+            });
         }, 1000);
-    }
-
-    private void checkNextService(int index) {
-        if (index >= checkNames.length) {
-            if (!hasInternet) {
-                showNoInternetError();
-            } else {
-                showOpeningMessage();
-            }
-            return;
-        }
-
-        updateLoadingText("Checking " + checkNames[index] + "...");
-
-        executor.execute(() -> {
-            boolean connected = checkConnectivity(checkUrls[index]);
-            if (connected) {
-                hasInternet = true;
-            }
-            mainHandler.postDelayed(() -> checkNextService(index + 1), 1500);
-        });
     }
 
     private boolean checkConnectivity(String urlString) {

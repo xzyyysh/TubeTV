@@ -11,27 +11,32 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class RtvdExtractor {
-    private static final String TAG = "RtvdExtractor";
+public class HtmlStreamExtractor {
+    private static final String TAG = "HtmlStreamExtractor";
     private static final int TIMEOUT_MS = 10000;
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private static final String DEFAULT_PATTERN = "https?://[^\"'\\s]*\\.m3u8[^\"'\\s]*";
 
     public interface ExtractionCallback {
         void onSuccess(String streamUrl);
         void onError(String error);
     }
 
-    public static void extractStreamUrl(String pageUrl, ExtractionCallback callback) {
+    public static void extractStreamUrl(String pageUrl, String regexPattern, ExtractionCallback callback) {
         executor.execute(() -> {
             try {
-                String htmlContent = fetchPageContent(pageUrl);
-                if (htmlContent == null) {
+                String html = fetchPageContent(pageUrl);
+                if (html == null) {
                     callback.onError("Failed to fetch page content");
                     return;
                 }
 
-                String streamUrl = extractM3u8Url(htmlContent);
-                if (streamUrl != null) {
+                String pattern = (regexPattern != null && !regexPattern.isEmpty()) ? regexPattern : DEFAULT_PATTERN;
+                Matcher matcher = Pattern.compile(pattern).matcher(html);
+
+                if (matcher.find()) {
+                    String streamUrl = matcher.groupCount() > 0 ? matcher.group(1) : matcher.group(0);
                     Log.d(TAG, "Stream URL extracted: " + streamUrl);
                     callback.onSuccess(streamUrl);
                 } else {
@@ -54,8 +59,7 @@ public class RtvdExtractor {
             connection.setConnectTimeout(TIMEOUT_MS);
             connection.setReadTimeout(TIMEOUT_MS);
 
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -72,17 +76,6 @@ public class RtvdExtractor {
                 connection.disconnect();
             }
         }
-        return null;
-    }
-
-    private static String extractM3u8Url(String html) {
-        Pattern pattern = Pattern.compile("https?://[^\"'\\s]*\\.m3u8[^\"'\\s]*");
-        Matcher matcher = pattern.matcher(html);
-
-        if (matcher.find()) {
-            return matcher.group(0);
-        }
-
         return null;
     }
 }

@@ -41,6 +41,13 @@ import io.tubetvlol.tubetv.utils.TelemicroExtractor;
 import io.tubetvlol.tubetv.utils.TelesistemaExtractor;
 import io.tubetvlol.tubetv.utils.RtvdExtractor;
 import io.tubetvlol.tubetv.utils.CdnExtractor;
+import io.tubetvlol.tubetv.utils.HtmlStreamExtractor;
+import io.tubetvlol.tubetv.utils.PuntaCanaTVExtractor;
+import io.tubetvlol.tubetv.utils.ColorVisionExtractor;
+import io.tubetvlol.tubetv.utils.CinevisionExtractor;
+import io.tubetvlol.tubetv.utils.TeleUniversoExtractor;
+import io.tubetvlol.tubetv.utils.RnnExtractor;
+import io.tubetvlol.tubetv.utils.VtvExtractor;
 import io.tubetvlol.tubetv.utils.PreferencesManager;
 
 @UnstableApi
@@ -56,6 +63,13 @@ public class PlayerActivity extends Activity {
     private static final String TELESISTEMA_PREFIX = "telesistema:";
     private static final String RTVD_PREFIX = "rtvd:";
     private static final String CDN_PREFIX = "cdn:";
+    private static final String HTMLSTREAM_PREFIX = "htmlstream:";
+    private static final String PUNTACANA_PREFIX = "puntacana:";
+    private static final String COLORVISION_PREFIX = "colorvision:";
+    private static final String CINEVISION_PREFIX = "cinevision:";
+    private static final String TELEUNIVERSO_PREFIX = "teleuniverso:";
+    private static final String RNN_PREFIX = "rnn:";
+    private static final String VTV_PREFIX = "vtv:";
     
     private ExoPlayer player;
     private PlayerView playerView;
@@ -177,6 +191,21 @@ public class PlayerActivity extends Activity {
             loadRtvdStream();
         } else if (streamUrl.startsWith(CDN_PREFIX)) {
             loadCdnStream();
+        } else if (streamUrl.startsWith(HTMLSTREAM_PREFIX)) {
+            String pageUrl = streamUrl.substring(HTMLSTREAM_PREFIX.length());
+            loadHtmlStream(pageUrl);
+        } else if (streamUrl.startsWith(PUNTACANA_PREFIX)) {
+            loadPuntaCanaStream();
+        } else if (streamUrl.startsWith(COLORVISION_PREFIX)) {
+            loadColorVisionStream();
+        } else if (streamUrl.startsWith(CINEVISION_PREFIX)) {
+            loadCinevisionStream();
+        } else if (streamUrl.startsWith(TELEUNIVERSO_PREFIX)) {
+            loadTeleUniversoStream();
+        } else if (streamUrl.startsWith(RNN_PREFIX)) {
+            loadRnnStream();
+        } else if (streamUrl.startsWith(VTV_PREFIX)) {
+            loadVtvStream();
         } else {
             initializePlayer(streamUrl);
         }
@@ -413,11 +442,16 @@ public class PlayerActivity extends Activity {
     }
 
     private void loadRtvdStream() {
-        Log.d(TAG, "Loading RTVD stream");
-        
+        String streamUrl = getIntent().getStringExtra("stream_url");
+        String pageUrl = (streamUrl != null && streamUrl.length() > RTVD_PREFIX.length())
+                ? streamUrl.substring(RTVD_PREFIX.length())
+                : "https://rtvd.gob.do/";
+
+        Log.d(TAG, "Loading RTVD stream from: " + pageUrl);
+
         showLoading();
-        
-        RtvdExtractor.extractStreamUrl(new RtvdExtractor.ExtractionCallback() {
+
+        RtvdExtractor.extractStreamUrl(pageUrl, new RtvdExtractor.ExtractionCallback() {
             @Override
             public void onSuccess(String streamUrl) {
                 Log.d(TAG, "RTVD stream URL extracted: " + streamUrl);
@@ -461,6 +495,204 @@ public class PlayerActivity extends Activity {
             @Override
             public void onError(String error) {
                 Log.e(TAG, "CDN extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadVtvStream() {
+        Log.d(TAG, "Loading VTV stream");
+
+        showLoading();
+
+        VtvExtractor.extractStreamUrl(new VtvExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "VTV stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "VTV extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadRnnStream() {
+        Log.d(TAG, "Loading RNN stream");
+
+        showLoading();
+
+        RnnExtractor.extractStreamUrl(new RnnExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "RNN stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "RNN extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadTeleUniversoStream() {
+        Log.d(TAG, "Loading TeleUniverso stream");
+
+        showLoading();
+
+        TeleUniversoExtractor.extractStreamUrl(new TeleUniversoExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "TeleUniverso stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "TeleUniverso extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadCinevisionStream() {
+        Log.d(TAG, "Loading Cinevision stream");
+
+        showLoading();
+
+        CinevisionExtractor.extractStreamUrl(new CinevisionExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "Cinevision stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Cinevision extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadColorVisionStream() {
+        Log.d(TAG, "Loading Color Vision stream");
+
+        showLoading();
+
+        ColorVisionExtractor.getStreamUrl(new ColorVisionExtractor.StreamCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "Color Vision stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Color Vision extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadPuntaCanaStream() {
+        Log.d(TAG, "Loading Punta Cana TV stream");
+
+        showLoading();
+
+        PuntaCanaTVExtractor.extractStreamUrl(new PuntaCanaTVExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "Punta Cana TV stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) initializePlayer(streamUrl);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Punta Cana TV extraction error: " + error);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        hideLoading();
+                        Toast.makeText(PlayerActivity.this, "Canal no disponible por el momento.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                });
+            }
+        });
+    }
+
+    private void loadHtmlStream(String pageUrl) {
+        Log.d(TAG, "Loading HTML stream from: " + pageUrl);
+
+        showLoading();
+
+        HtmlStreamExtractor.extractStreamUrl(pageUrl, null, new HtmlStreamExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String streamUrl) {
+                Log.d(TAG, "HTML stream URL extracted: " + streamUrl);
+                runOnUiThread(() -> {
+                    if (isActivityActive) {
+                        initializePlayer(streamUrl);
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "HTML stream extraction error: " + error);
                 runOnUiThread(() -> {
                     if (isActivityActive) {
                         hideLoading();
