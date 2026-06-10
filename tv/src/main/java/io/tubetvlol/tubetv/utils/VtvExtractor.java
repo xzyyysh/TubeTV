@@ -27,19 +27,23 @@ public class VtvExtractor {
         executor.execute(() -> {
             for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
                 try {
-                    String pageHtml = fetchContent(PAGE_URL, "https://vtvcanal32.com.do/");
+                    String pageHtml = fetchContent(PAGE_URL, PAGE_URL);
                     if (pageHtml == null) throw new Exception("Failed to fetch main page");
 
-                    String iframeUrl = extractPattern(pageHtml, "iframe[^>]+src=[\"']([^\"']*debacker\\.tech[^\"']+)[\"']");
+                    // find iframe with edge.livestreaminggroup.info
+                    String iframeUrl = extractPattern(pageHtml, "iframe[^>]+src=[\"']([^\"']*edge\\.livestreaminggroup\\.info[^\"']+)[\"']");
                     if (iframeUrl == null) throw new Exception("No player iframe found");
 
-                    String playerHtml = fetchContent(iframeUrl, PAGE_URL);
-                    if (playerHtml == null) throw new Exception("Failed to fetch player page");
+                    Log.d(TAG, "Found iframe URL: " + iframeUrl);
 
-                    String streamUrl = extractPattern(playerHtml, "\"sources\"\\s*:\\s*\\{\"hls\"\\s*:\\s*\\{\"url\"\\s*:\\s*\"(https?://[^\"]+\\.m3u8[^\"]*)\"");
-                    if (streamUrl == null) throw new Exception("No HLS source URL found in player config");
+                    // extract stream name from iframe path, eg /vtv32live/embed.html -> vtv32live
+                    Matcher nameMatcher = Pattern.compile("([^/]+)/embed\\.html").matcher(iframeUrl);
+                    if (!nameMatcher.find()) throw new Exception("Could not extract stream name from iframe URL");
 
-                    Log.d(TAG, "Stream URL extracted: " + streamUrl);
+                    String streamName = nameMatcher.group(1);
+                    String streamUrl = "https://edge.livestreaminggroup.info/" + streamName + "/index.m3u8";
+
+                    Log.d(TAG, "Stream URL constructed: " + streamUrl);
                     callback.onSuccess(streamUrl);
                     return;
 
