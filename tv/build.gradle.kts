@@ -11,6 +11,7 @@ android {
     defaultConfig {
         applicationId = "io.tubetvlol.tubetv"
         minSdk = 24
+        //noinspection EditedTargetSdkVersion
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
