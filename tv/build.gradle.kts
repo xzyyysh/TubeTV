@@ -6,13 +6,13 @@ plugins {
 
 android {
     namespace = "io.tubetvlol.tubetv"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "io.tubetvlol.tubetv"
         minSdk = 24
         //noinspection EditedTargetSdkVersion
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0.0"
 

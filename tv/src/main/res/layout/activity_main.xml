@@ -93,7 +93,7 @@
             android:src="@android:drawable/ic_menu_gallery"
             android:scaleType="fitCenter"
             android:padding="8dp"
-            android:contentDescription="Home"
+            android:contentDescription="@string/sidebar_home"
             android:focusable="true"
             android:clickable="true"
             app:tint="#FFFFFF" />
@@ -106,7 +106,7 @@
             android:src="@android:drawable/ic_menu_recent_history"
             android:scaleType="fitCenter"
             android:padding="8dp"
-            android:contentDescription="Recents"
+            android:contentDescription="@string/sidebar_recents"
             android:focusable="true"
             android:clickable="true"
             app:tint="#FFFFFF" />
@@ -239,7 +239,7 @@
                     android:id="@+id/recents_empty_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No canales recientes vistos aun."
+                    android:text="@string/no_recent_channels"
                     android:textSize="16sp"
                     android:textColor="?android:attr/textColorSecondary"
                     android:fontFamily="@font/ubuntu"

@@ -53,19 +53,10 @@
 
     </LinearLayout>
 
-    <!-- Content with proper clipping -->
-    <FrameLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:clipChildren="true"
-        android:clipToPadding="true">
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="24dp"
-            android:clipChildren="true"
-            android:clipToPadding="true">
+        android:padding="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -241,7 +232,5 @@
         </LinearLayout>
 
     </ScrollView>
-
-    </FrameLayout>
 
 </LinearLayout>

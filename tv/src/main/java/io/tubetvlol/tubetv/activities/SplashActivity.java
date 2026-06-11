@@ -13,12 +13,16 @@ import android.view.View;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.annotation.SuppressLint;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
 import io.tubetvlol.tubetv.R;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@SuppressLint("CustomSplashScreen")
 public class SplashActivity extends Activity {
 
     private TextView loadingText;
@@ -137,6 +141,7 @@ public class SplashActivity extends Activity {
         });
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     private void showOpeningMessage() {
         updateLoadingText("Opening...");
         mainHandler.postDelayed(() -> {
@@ -147,8 +152,8 @@ public class SplashActivity extends Activity {
 
     private void showNoInternetError() {
         mainHandler.post(() -> {
-            loadingText.setText("Connection Failed");
-            errorText.setText("Error: No internet connection detected\n\nPlease check your network and try again later.");
+            loadingText.setText(R.string.connection_failed);
+            errorText.setText(R.string.connection_error);
             errorText.setVisibility(View.VISIBLE);
             ObjectAnimator fadeIn = ObjectAnimator.ofFloat(errorText, "alpha", 0f, 1f);
             fadeIn.setDuration(400);

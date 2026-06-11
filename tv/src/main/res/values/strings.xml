@@ -19,4 +19,25 @@
     <string name="grid_columns">Columnas de la grilla</string>
     <string name="app_version">Version 1.0.0</string>
     <string name="app_credits">TubeTV Maintainer, xzyyysh (Aka: F3l1x)</string>
+    <string name="sidebar_home">Home</string>
+    <string name="sidebar_recents">Recents</string>
+    <string name="no_recent_channels">No canales recientes vistos aun.</string>
+    <string name="splash_loading">Loading…</string>
+    <string name="checking_updates">Revisando si hay actualizaciones nuevas</string>
+    <string name="downloading_update">Descargando actualizacion</string>
+    <string name="installing">Instalando…</string>
+    <string name="download_error">Error al descargar</string>
+    <string name="connection_failed">Connection Failed</string>
+    <string name="connection_error">Error: No internet connection detected\n\nPlease check your network and try again later.</string>
+    <string name="cancel">Cancelar</string>
+    <string name="progress_size_default">0.0 MB / 0.0 MB</string>
+    <string name="progress_speed_default">Velocidad: 0.0 MB/s</string>
+    <plurals name="channels_count">
+        <item quantity="one">%d canal</item>
+        <item quantity="other">%d canales</item>
+    </plurals>
+    <plurals name="recent_channels_count">
+        <item quantity="one">%d canal</item>
+        <item quantity="other">%d canales</item>
+    </plurals>
 </resources>

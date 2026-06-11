@@ -1,6 +1,7 @@
 package io.tubetvlol.tubetv.activities;
 
 import androidx.media3.common.util.UnstableApi;
+import androidx.appcompat.content.res.AppCompatResources;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -157,11 +158,11 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
         onHomePage = goHome;
         sidebarHome.setBackground(goHome
-                ? getDrawable(R.drawable.sidebar_item_selected)
+                ? AppCompatResources.getDrawable(this, R.drawable.sidebar_item_selected)
                 : null);
         sidebarRecents.setBackground(goHome
                 ? null
-                : getDrawable(R.drawable.sidebar_item_selected));
+                : AppCompatResources.getDrawable(this, R.drawable.sidebar_item_selected));
 
         if (!goHome) {
             loadRecentChannels();
@@ -252,7 +253,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private void updateChannelsCount() {
         if (channelsCountTextView != null) {
-            channelsCountTextView.setText(channelList.size() + " canales");
+            channelsCountTextView.setText(getResources().getQuantityString(R.plurals.channels_count, channelList.size(), channelList.size()));
         }
     }
 
@@ -283,7 +284,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
             recentsEmptyText.setVisibility(View.GONE);
             if (recentChannelsCountTextView != null) {
                 int count = recentChannelList.size();
-                recentChannelsCountTextView.setText(count + (count == 1 ? " canal" : " canales"));
+                recentChannelsCountTextView.setText(getResources().getQuantityString(R.plurals.recent_channels_count, count, count));
             }
         }
     }
