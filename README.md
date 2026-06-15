@@ -4,7 +4,7 @@
   <img src="assets/bannerReadme.png" alt="TubeTV Banner" width="100%">
 </p>
 
-![Work in Progress](https://img.shields.io/badge/status-work%20in%20progress-555555?style=flat-square)
+<u>**⚠️ This App may be stable or not, if any channel stops working, please report it. We will offer new updates whenever we can.**</u>
 
 ---
 

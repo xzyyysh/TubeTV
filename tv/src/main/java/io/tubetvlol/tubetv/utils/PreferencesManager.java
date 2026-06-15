@@ -15,7 +15,9 @@ public class PreferencesManager {
     private static final String KEY_SHOW_CHANNEL_NUMBERS = "show_channel_numbers";
     private static final String KEY_GRID_COLUMNS = "grid_columns";
     private static final String KEY_RECENT_CHANNELS = "recent_channels";
+    private static final String KEY_LAST_UPDATE_CHECK = "last_update_check";
     private static final long RECENT_CHANNEL_DURATION = 60 * 60 * 1000;
+    private static final long UPDATE_COOLDOWN_DURATION = 24 * 60 * 60 * 1000;
 
     private SharedPreferences prefs;
 
@@ -53,6 +55,20 @@ public class PreferencesManager {
 
     public void setGridColumns(int columns) {
         prefs.edit().putInt(KEY_GRID_COLUMNS, columns).apply();
+    }
+
+    public long getLastUpdateCheckTime() {
+        return prefs.getLong(KEY_LAST_UPDATE_CHECK, 0);
+    }
+
+    public void setLastUpdateCheckTime(long time) {
+        prefs.edit().putLong(KEY_LAST_UPDATE_CHECK, time).apply();
+    }
+
+    public boolean shouldCheckForUpdate() {
+        long lastCheck = getLastUpdateCheckTime();
+        long now = System.currentTimeMillis();
+        return (now - lastCheck) >= UPDATE_COOLDOWN_DURATION;
     }
 
     public void addRecentChannel(int channelId) {

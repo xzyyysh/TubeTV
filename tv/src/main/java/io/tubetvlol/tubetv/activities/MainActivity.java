@@ -40,7 +40,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private static final String TAG = "MainActivity";
     private static final int FADE_IN_DURATION = 1000;
     private static final int PAGE_FADE_DURATION = 200;
-    private static final long TIME_UPDATE_INTERVAL = 60000;
+    private static final long TIME_UPDATE_INTERVAL = 1000;
 
     private TextView currentTimeTextView;
     private TextView channelsCountTextView;
@@ -196,7 +196,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
 
     private void updateTime() {
         if (currentTimeTextView != null) {
-            SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
+            SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm:ss a", Locale.getDefault());
             currentTimeTextView.setText(timeFormat.format(new Date()));
         }
     }

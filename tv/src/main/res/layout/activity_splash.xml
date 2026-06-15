@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
@@ -38,5 +39,54 @@
         android:fontFamily="@font/ubuntu"
         android:gravity="center"
         android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/progress_container"
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginTop="20dp">
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/download_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:indeterminate="false"
+            app:indicatorColor="@android:color/holo_orange_light"
+            app:trackColor="#33FFFFFF"
+            app:trackThickness="6dp" />
+
+        <TextView
+            android:id="@+id/progress_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/progress_size_default"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:fontFamily="@font/ubuntu"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/progress_speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/progress_speed_default"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:fontFamily="@font/ubuntu"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancel_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:fontFamily="@font/ubuntu"
+            style="@style/Widget.MaterialComponents.Button.TextButton" />
+
+    </LinearLayout>
 
 </LinearLayout>
