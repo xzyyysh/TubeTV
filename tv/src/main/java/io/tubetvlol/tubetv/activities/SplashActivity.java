@@ -6,16 +6,24 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.animation.OvershootInterpolator;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.annotation.SuppressLint;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import java.io.File;
 import java.net.HttpURLConnection;
@@ -82,15 +90,24 @@ public class SplashActivity extends Activity {
         startConnectivityChecks();
     }
 
+    @SuppressWarnings("deprecation")
     private void hideSystemUI() {
-        getWindow().getDecorView().setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-            | View.SYSTEM_UI_FLAG_FULLSCREEN
-        );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+            );
+        }
     }
 
     private void animateLogo(ImageView logo) {
@@ -167,6 +184,8 @@ public class SplashActivity extends Activity {
         }, 3000);
     }
 
+    @SuppressWarnings("deprecation")
+    @OptIn(markerClass = UnstableApi.class)
     private void showUpdateDialog(UpdateChecker.UpdateResult result) {
         runOnUiThread(() -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK);
@@ -180,6 +199,7 @@ public class SplashActivity extends Activity {
         });
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     private void startDownload() {
         updateLoadingText("Downloading update...");
         progressContainer.setVisibility(View.VISIBLE);
@@ -190,7 +210,9 @@ public class SplashActivity extends Activity {
         progressSpeed.setText(R.string.progress_speed_default);
 
         File updatesDir = new File(getCacheDir(), "updates");
-        updatesDir.mkdirs();
+        if (!updatesDir.mkdirs() && !updatesDir.exists()) {
+            Log.w("SplashActivity", "Failed to create updates directory");
+        }
         apkFile = new File(updatesDir, "update.apk");
 
         downloader = new UpdateDownloader();
@@ -210,7 +232,7 @@ public class SplashActivity extends Activity {
             }
 
             @Override
-            public void onComplete(String filePath) {
+            public void onComplete(@NonNull String filePath) {
                 progressContainer.setVisibility(View.GONE);
                 updateLoadingText("Installing...");
                 mainHandler.postDelayed(() -> {
@@ -221,7 +243,7 @@ public class SplashActivity extends Activity {
             }
 
             @Override
-            public void onError(String error) {
+            public void onError(@Nullable String error) {
                 progressContainer.setVisibility(View.GONE);
                 updateLoadingText("Update failed");
                 mainHandler.postDelayed(() -> goToMain(), 2000);

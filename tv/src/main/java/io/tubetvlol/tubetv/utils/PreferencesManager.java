@@ -2,6 +2,7 @@ package io.tubetvlol.tubetv.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PreferencesManager {
+    private static final String TAG = "PreferencesManager";
     private static final String PREFS_NAME = "TubeTVPrefs";
     private static final String KEY_CONTROLS_TIMEOUT = "controls_timeout";
     private static final String KEY_KEEP_SCREEN_ON = "keep_screen_on";
@@ -19,7 +21,7 @@ public class PreferencesManager {
     private static final long RECENT_CHANNEL_DURATION = 60 * 60 * 1000;
     private static final long UPDATE_COOLDOWN_DURATION = 24 * 60 * 60 * 1000;
 
-    private SharedPreferences prefs;
+    private final SharedPreferences prefs;
 
     public PreferencesManager(Context context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -107,7 +109,7 @@ public class PreferencesManager {
             prefs.edit().putString(KEY_RECENT_CHANNELS, newArray.toString()).apply();
             
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error adding recent channel", e);
         }
     }
 
@@ -127,7 +129,7 @@ public class PreferencesManager {
             }
             
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error getting recent channel IDs", e);
         }
         return recentIds;
     }
@@ -150,7 +152,7 @@ public class PreferencesManager {
             prefs.edit().putString(KEY_RECENT_CHANNELS, cleanedArray.toString()).apply();
             
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error cleaning expired recent channels", e);
         }
     }
 
@@ -159,7 +161,7 @@ public class PreferencesManager {
         try {
             return new JSONArray(json);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error parsing recent channels JSON", e);
             return new JSONArray();
         }
     }

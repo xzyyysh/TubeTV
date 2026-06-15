@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowInsetsController;
 import android.view.WindowInsets;
@@ -24,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,7 +57,6 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     private NestedScrollView pageRecents;
     private ImageButton sidebarHome;
     private ImageButton sidebarRecents;
-    private ImageButton settingsButton;
     private ChannelAdapter channelAdapter;
     private ChannelAdapter recentChannelAdapter;
     private List<Channel> channelList;
@@ -82,6 +84,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         logScreenView("home_screen");
     }
 
+    @SuppressWarnings("deprecation")
     private void hideSystemUI() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             WindowInsetsController controller = getWindow().getInsetsController();
@@ -109,7 +112,6 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         pageRecents = findViewById(R.id.page_recents);
         sidebarHome = findViewById(R.id.sidebar_home);
         sidebarRecents = findViewById(R.id.sidebar_recents);
-        settingsButton = findViewById(R.id.settings_button);
 
         channelList = new ArrayList<>();
         recentChannelList = new ArrayList<>();
@@ -129,6 +131,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         sidebarHome.setOnClickListener(v -> navigateToPage(true));
         sidebarRecents.setOnClickListener(v -> navigateToPage(false));
 
+        ImageButton settingsButton = findViewById(R.id.settings_button);
         settingsButton.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, SettingsActivity.class)));
     }
 
@@ -183,7 +186,7 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
     }
 
     private void startTimeUpdater() {
-        timeHandler = new Handler();
+        timeHandler = new Handler(Looper.getMainLooper());
         timeRunnable = new Runnable() {
             @Override
             public void run() {
@@ -242,11 +245,12 @@ public class MainActivity extends Activity implements ChannelAdapter.OnChannelCl
         try {
             InputStream is = getAssets().open("channels.json");
             byte[] buffer = new byte[is.available()];
-            is.read(buffer);
+            int bytesRead = is.read(buffer);
             is.close();
-            return new String(buffer, "UTF-8");
+            if (bytesRead <= 0) return null;
+            return new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            Log.e(TAG, "Error loading channels from assets", ex);
             return null;
         }
     }

@@ -1,6 +1,6 @@
 ## a tv & mobile app with the dominican channels and more.
 
-<p align="center">
+<p style="text-align: center;">
   <img src="assets/bannerReadme.png" alt="TubeTV Banner" width="100%">
 </p>
 
